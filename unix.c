@@ -114,7 +114,7 @@ enet_address_set_host (ENetAddress * address, const char * name)
 #endif
 
     if (hostEntry == NULL ||
-        hostEntry -> h_addrtype != AF_INET6)
+        hostEntry -> h_addrtype != AF_INET)
     {
 #ifdef HAS_INET_PTON
         if (! inet_pton (AF_INET6, name, & address -> host))
