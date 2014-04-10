@@ -88,9 +88,11 @@ typedef enum _ENetSocketShutdown
  */
 typedef struct _ENetAddress
 {
-   enet_uint32 host;
+   struct in6_addr host;
    enet_uint16 port;
 } ENetAddress;
+
+#define in6_equal(in6_addr_a, in6_addr_b) (memcmp(&in6_addr_a, &in6_addr_b, sizeof(struct in6_addr)) == 0)
 
 /**
  * Packet flag bit constants.
