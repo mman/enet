@@ -72,6 +72,7 @@ typedef enum _ENetSocketShutdown
     ENET_SOCKET_SHUTDOWN_READ_WRITE = 2
 } ENetSocketShutdown;
 
+#define ENET_IPV6           1
 #define ENET_HOST_ANY       0
 #define ENET_HOST_BROADCAST 0xFFFFFFFFU
 #define ENET_PORT_ANY       0
