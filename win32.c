@@ -61,20 +61,34 @@ enet_time_set (enet_uint32 newTimeBase)
 int
 enet_address_set_host (ENetAddress * address, const char * name)
 {
-    struct hostent * hostEntry;
+    struct hostent * hostEntry = NULL;
+#ifdef HAS_GETHOSTBYNAME_R
+    struct hostent hostData;
+    char buffer [2048];
+    int errnum;
 
+#if defined(linux) || defined(__linux) || defined(__linux__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+    gethostbyname_r (name, & hostData, buffer, sizeof (buffer), & hostEntry, & errnum);
+#else
+    hostEntry = gethostbyname_r (name, & hostData, buffer, sizeof (buffer), & errnum);
+#endif
+#else
     hostEntry = gethostbyname (name);
+#endif
+
     if (hostEntry == NULL ||
         hostEntry -> h_addrtype != AF_INET)
     {
-        unsigned long host = inet_addr (name);
-        if (host == INADDR_NONE)
+#ifdef HAS_INET_PTON
+        if (! inet_pton (AF_INET6, name, & address -> host))
+#else
+        if (! inet_aton (name, (struct in6_addr *) & address -> host))
+#endif
             return -1;
-        address -> host = host;
         return 0;
     }
 
-    address -> host = * hostEntry -> h_addr_list [0];
+//    address -> host = * (enet_uint32 *) hostEntry -> h_addr_list [0];
 
     return 0;
 }
@@ -82,16 +96,20 @@ enet_address_set_host (ENetAddress * address, const char * name)
 int
 enet_address_get_host_ip (const ENetAddress * address, char * name, size_t nameLength)
 {
+#ifdef HAS_INET_NTOP
+    if (inet_ntop (AF_INET6, & address -> host, name, nameLength) == NULL)
+#else
     char * addr = inet_ntoa (* (struct in6_addr *) & address -> host);
-    if (addr == NULL)
-        return -1;
-    else
+    if (addr != NULL)
     {
         size_t addrLen = strlen(addr);
         if (addrLen >= nameLength)
           return -1;
         memcpy (name, addr, addrLen + 1);
-    }
+    } 
+    else
+#endif
+        return -1;
     return 0;
 }
 
@@ -99,11 +117,25 @@ int
 enet_address_get_host (const ENetAddress * address, char * name, size_t nameLength)
 {
     struct in6_addr in;
-    struct hostent * hostEntry;
- 
+    struct hostent * hostEntry = NULL;
+#ifdef HAS_GETHOSTBYADDR_R
+    struct hostent hostData;
+    char buffer [2048];
+    int errnum;
+
+    in = address -> host;
+
+#if defined(linux) || defined(__linux) || defined(__linux__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+    gethostbyaddr_r ((char *) & in, sizeof (struct in6_addr), AF_INET6, & hostData, buffer, sizeof (buffer), & hostEntry, & errnum);
+#else
+    hostEntry = gethostbyaddr_r ((char *) & in, sizeof (struct in6_addr), AF_INET6, & hostData, buffer, sizeof (buffer), & errnum);
+#endif
+#else
     in.s_addr = address -> host;
-    
+
     hostEntry = gethostbyaddr ((char *) & in, sizeof (struct in6_addr), AF_INET6);
+#endif
+
     if (hostEntry == NULL)
       return enet_address_get_host_ip (address, name, nameLength);
     else
