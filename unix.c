@@ -168,7 +168,7 @@ enet_address_get_host (const ENetAddress * address, char * name, size_t nameLeng
     hostEntry = gethostbyaddr_r ((char *) & in, sizeof (struct in6_addr), AF_INET6, & hostData, buffer, sizeof (buffer), & errnum);
 #endif
 #else
-    in.s_addr = address -> host;
+    in = address -> host;
 
     hostEntry = gethostbyaddr ((char *) & in, sizeof (struct in6_addr), AF_INET6);
 #endif
