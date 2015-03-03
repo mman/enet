@@ -1817,8 +1817,8 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
 #ifdef ENET_DEBUG
             perror ("Error dispatching incoming packets");
 #endif
-                DDLogError(@"%s Error dispatching incoming packets",
-                           __PRETTY_FUNCTION__);
+                DDLogError(@"%s Error dispatching incoming packets: %s",
+                           __PRETTY_FUNCTION__, strerror(errno));
 
             return -1;
 
@@ -1845,8 +1845,8 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
 #ifdef ENET_DEBUG
           perror ("Error sending outgoing packets");
 #endif
-               DDLogError(@"%s Error sending outgoing packets",
-                          __PRETTY_FUNCTION__);
+               DDLogError(@"%s Error sending outgoing packets: %s",
+                          __PRETTY_FUNCTION__, strerror(errno));
 
           return -1;
 
@@ -1863,8 +1863,8 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
 #ifdef ENET_DEBUG
           perror ("Error receiving incoming packets");
 #endif
-               DDLogError(@"%s Error receiving incoming packets",
-                          __PRETTY_FUNCTION__);
+               DDLogError(@"%s Error receiving incoming packets: %s",
+                          __PRETTY_FUNCTION__, strerror(errno));
 
           return -1;
 
@@ -1881,8 +1881,8 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
 #ifdef ENET_DEBUG
           perror ("Error sending outgoing packets");
 #endif
-               DDLogError(@"%s Error sending outgoing packets",
-                          __PRETTY_FUNCTION__);
+               DDLogError(@"%s Error sending outgoing packets: %s",
+                          __PRETTY_FUNCTION__, strerror(errno));
 
           return -1;
 
@@ -1901,8 +1901,8 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
 #ifdef ENET_DEBUG
              perror ("Error dispatching incoming packets");
 #endif
-                  DDLogError(@"%s Error dispatching incoming packets",
-                             __PRETTY_FUNCTION__);
+                  DDLogError(@"%s Error dispatching incoming packets: %s",
+                             __PRETTY_FUNCTION__, strerror(errno));
 
              return -1;
 
