@@ -9,8 +9,8 @@
 #include "enet/enet_time.h"
 #include "enet/enet.h"
 
+#define LOG_LEVEL_DEF DDLogLevelInfo
 #import "CocoaLumberjack.h"
-static const DDLogLevel ddLogLevel = DDLogLevelInfo;
 
 static size_t commandSizes [ENET_PROTOCOL_COMMAND_COUNT] =
 {
