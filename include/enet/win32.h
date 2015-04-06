@@ -22,11 +22,10 @@
 	#define _WIN32_WINNT 0x0501
 #endif
 #define NOMINMAX
-#include <windows.h>
-#include <ws2tcpip.h>
-
 #include <stdlib.h>
 #include <winsock2.h>
+#include <windows.h>
+#include <ws2tcpip.h>
 
 typedef SOCKET ENetSocket;
 
