@@ -9,8 +9,10 @@
 #include "enet/enet_time.h"
 #include "enet/enet.h"
 
+#ifdef __APPLE__
 #define LOG_LEVEL_DEF DDLogLevelInfo
 #import "CocoaLumberjack.h"
+#endif
 
 static size_t commandSizes [ENET_PROTOCOL_COMMAND_COUNT] =
 {
@@ -1664,6 +1666,7 @@ enet_protocol_send_outgoing_commands (ENetHost * host, ENetEvent * event, int ch
 #ifdef ENET_DEBUG
            printf ("peer %u: %f%%+-%f%% packet loss, %u+-%u ms round trip time, %f%% throttle, %u/%u outgoing, %u/%u incoming\n", currentPeer -> incomingPeerID, currentPeer -> packetLoss / (float) ENET_PEER_PACKET_LOSS_SCALE, currentPeer -> packetLossVariance / (float) ENET_PEER_PACKET_LOSS_SCALE, currentPeer -> roundTripTime, currentPeer -> roundTripTimeVariance, currentPeer -> packetThrottle / (float) ENET_PEER_PACKET_THROTTLE_SCALE, enet_list_size (& currentPeer -> outgoingReliableCommands), enet_list_size (& currentPeer -> outgoingUnreliableCommands), currentPeer -> channels != NULL ? enet_list_size (& currentPeer -> channels -> incomingReliableCommands) : 0, currentPeer -> channels != NULL ? enet_list_size (& currentPeer -> channels -> incomingUnreliableCommands) : 0);
 #endif
+#ifdef __APPLE__
             DDLogVerbose(@"peer %u: %f%%+-%f%% packet loss, %u+-%u ms round trip time, %f%% throttle, %u/%u outgoing, %u/%u incoming\n",
                          currentPeer -> incomingPeerID, currentPeer -> packetLoss / (float) ENET_PEER_PACKET_LOSS_SCALE,
                          currentPeer -> packetLossVariance / (float) ENET_PEER_PACKET_LOSS_SCALE, currentPeer -> roundTripTime,
@@ -1671,6 +1674,7 @@ enet_protocol_send_outgoing_commands (ENetHost * host, ENetEvent * event, int ch
                          enet_list_size (& currentPeer -> outgoingReliableCommands), enet_list_size (& currentPeer -> outgoingUnreliableCommands),
                          currentPeer -> channels != NULL ? enet_list_size (& currentPeer -> channels -> incomingReliableCommands) : 0,
                          currentPeer -> channels != NULL ? enet_list_size (& currentPeer -> channels -> incomingUnreliableCommands) : 0);
+#endif
           
            currentPeer -> packetLossVariance -= currentPeer -> packetLossVariance / 4;
 
@@ -1821,8 +1825,10 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
 #ifdef ENET_DEBUG
             perror ("Error dispatching incoming packets");
 #endif
+#ifdef __APPLE__
                 DDLogError(@"%s Error dispatching incoming packets: %s",
                            __PRETTY_FUNCTION__, strerror(errno));
+#endif
 
             return -1;
 
@@ -1849,8 +1855,10 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
 #ifdef ENET_DEBUG
           perror ("Error sending outgoing packets");
 #endif
+#ifdef __APPLE__
                DDLogError(@"%s Error sending outgoing packets: %s",
                           __PRETTY_FUNCTION__, strerror(errno));
+#endif
 
           return -1;
 
@@ -1867,8 +1875,10 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
 #ifdef ENET_DEBUG
           perror ("Error receiving incoming packets");
 #endif
+#ifdef __APPLE__
                DDLogError(@"%s Error receiving incoming packets: %s",
                           __PRETTY_FUNCTION__, strerror(errno));
+#endif
 
           return -1;
 
@@ -1885,8 +1895,10 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
 #ifdef ENET_DEBUG
           perror ("Error sending outgoing packets");
 #endif
+#ifdef __APPLE__
                DDLogError(@"%s Error sending outgoing packets: %s",
                           __PRETTY_FUNCTION__, strerror(errno));
+#endif
 
           return -1;
 
@@ -1905,8 +1917,10 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
 #ifdef ENET_DEBUG
              perror ("Error dispatching incoming packets");
 #endif
+#ifdef __APPLE__
                   DDLogError(@"%s Error dispatching incoming packets: %s",
                              __PRETTY_FUNCTION__, strerror(errno));
+#endif
 
              return -1;
 
