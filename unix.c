@@ -131,6 +131,7 @@ enet_address_set_host (ENetAddress * address, const char * name)
     if (resultList != NULL)
       freeaddrinfo (resultList);
 #else
+#warning "Really use gethostbyname() with IPv6? Not all platforms support it."
     struct hostent * hostEntry = NULL;
 #ifdef HAS_GETHOSTBYNAME_R
     struct hostent hostData;
@@ -157,6 +158,7 @@ enet_address_set_host (ENetAddress * address, const char * name)
 #ifdef HAS_INET_PTON
     if (! inet_pton (AF_INET6, name, & address -> host))
 #else
+#error "inet_pton() is needed for IPv6 support"
     if (! inet_aton (name, (struct in_addr *) & address -> host))
 #endif
         return -1;
@@ -170,6 +172,7 @@ enet_address_get_host_ip (const ENetAddress * address, char * name, size_t nameL
 #ifdef HAS_INET_NTOP
     if (inet_ntop (AF_INET6, & address -> host, name, nameLength) == NULL)
 #else
+#error "inet_ntop() is needed for IPv6 support"
     char * addr = inet_ntoa (* (struct in_addr *) & address -> host);
     if (addr != NULL)
     {
@@ -208,6 +211,7 @@ enet_address_get_host (const ENetAddress * address, char * name, size_t nameLeng
     if (err != EAI_NONAME)
       return 0;
 #else
+#warning "Really use gethostbyaddr() with IPv6? Not all platforms support it."
     struct in6_addr in;
     struct hostent * hostEntry = NULL;
 #ifdef HAS_GETHOSTBYADDR_R
