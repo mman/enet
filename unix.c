@@ -147,7 +147,7 @@ enet_address_set_host (ENetAddress * address, const char * name)
     hostEntry = gethostbyname (name);
 #endif
 
-    if (hostEntry != NULL && hostEntry -> h_addrtype == AF_INET)
+    if (hostEntry != NULL && hostEntry -> h_addrtype == AF_INET6)
     {
         address -> host = *(struct in6_addr *) hostEntry -> h_addr_list [0];
 
