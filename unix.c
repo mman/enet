@@ -110,21 +110,36 @@ enet_address_set_host (ENetAddress * address, const char * name)
     memset (& hints, 0, sizeof (hints));
     hints.ai_family = AF_UNSPEC;
 
-    if (getaddrinfo (name, NULL, NULL, & resultList) != 0)
+    if (getaddrinfo (name, NULL, & hints, & resultList) != 0)
       return -1;
 
     for (result = resultList; result != NULL; result = result -> ai_next)
     {
-        //todo: split 4 with ::ffff: and v6 
-        if (/*result -> ai_family == AF_INET && */ result -> ai_addr != NULL && result -> ai_addrlen >= sizeof (struct sockaddr_in))
+        if (result -> ai_addr != NULL && result -> ai_addrlen >= sizeof (struct sockaddr_in))
         {
-            struct sockaddr_in6 * sin = (struct sockaddr_in6 *) result -> ai_addr;
+            if (result -> ai_family == AF_INET)
+            {
+                struct sockaddr_in * sin = (struct sockaddr_in *) result -> ai_addr;
 
-            address -> host = sin -> sin6_addr;
+                ((uint32_t *) & address -> host.s6_addr)[0] = 0;
+                ((uint32_t *) & address -> host.s6_addr)[1] = 0;
+                ((uint32_t *) & address -> host.s6_addr)[2] = htonl(0xffff);
+                ((uint32_t *) & address -> host.s6_addr)[3] = sin->sin_addr.s_addr;
 
-            freeaddrinfo (resultList);
+                freeaddrinfo (resultList);
 
-            return 0;
+                return 0;
+            }
+            else if(result -> ai_family == AF_INET6)
+            {
+                struct sockaddr_in6 * sin = (struct sockaddr_in6 *) result -> ai_addr;
+
+                address -> host = sin -> sin6_addr;
+
+                freeaddrinfo (resultList);
+
+                return 0;
+            }
         }
     }
 
