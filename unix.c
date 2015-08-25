@@ -110,27 +110,43 @@ enet_address_set_host (ENetAddress * address, const char * name)
     memset (& hints, 0, sizeof (hints));
     hints.ai_family = AF_UNSPEC;
 
-    if (getaddrinfo (name, NULL, NULL, & resultList) != 0)
+    if (getaddrinfo (name, NULL, & hints, & resultList) != 0)
       return -1;
 
     for (result = resultList; result != NULL; result = result -> ai_next)
     {
-        //todo: split 4 with ::ffff: and v6 
-        if (/*result -> ai_family == AF_INET && */ result -> ai_addr != NULL && result -> ai_addrlen >= sizeof (struct sockaddr_in))
+        if (result -> ai_addr != NULL && result -> ai_addrlen >= sizeof (struct sockaddr_in))
         {
-            struct sockaddr_in6 * sin = (struct sockaddr_in6 *) result -> ai_addr;
+            if (result -> ai_family == AF_INET)
+            {
+                struct sockaddr_in * sin = (struct sockaddr_in *) result -> ai_addr;
 
-            address -> host = sin -> sin6_addr;
+                ((uint32_t *) & address -> host.s6_addr)[0] = 0;
+                ((uint32_t *) & address -> host.s6_addr)[1] = 0;
+                ((uint32_t *) & address -> host.s6_addr)[2] = htonl(0xffff);
+                ((uint32_t *) & address -> host.s6_addr)[3] = sin->sin_addr.s_addr;
 
-            freeaddrinfo (resultList);
+                freeaddrinfo (resultList);
 
-            return 0;
+                return 0;
+            }
+            else if(result -> ai_family == AF_INET6)
+            {
+                struct sockaddr_in6 * sin = (struct sockaddr_in6 *) result -> ai_addr;
+
+                address -> host = sin -> sin6_addr;
+
+                freeaddrinfo (resultList);
+
+                return 0;
+            }
         }
     }
 
     if (resultList != NULL)
       freeaddrinfo (resultList);
 #else
+#warning "Really use gethostbyname() with IPv6? Not all platforms support it."
     struct hostent * hostEntry = NULL;
 #ifdef HAS_GETHOSTBYNAME_R
     struct hostent hostData;
@@ -146,7 +162,7 @@ enet_address_set_host (ENetAddress * address, const char * name)
     hostEntry = gethostbyname (name);
 #endif
 
-    if (hostEntry != NULL && hostEntry -> h_addrtype == AF_INET)
+    if (hostEntry != NULL && hostEntry -> h_addrtype == AF_INET6)
     {
         address -> host = *(struct in6_addr *) hostEntry -> h_addr_list [0];
 
@@ -157,6 +173,7 @@ enet_address_set_host (ENetAddress * address, const char * name)
 #ifdef HAS_INET_PTON
     if (! inet_pton (AF_INET6, name, & address -> host))
 #else
+#error "inet_pton() is needed for IPv6 support"
     if (! inet_aton (name, (struct in_addr *) & address -> host))
 #endif
         return -1;
@@ -170,6 +187,7 @@ enet_address_get_host_ip (const ENetAddress * address, char * name, size_t nameL
 #ifdef HAS_INET_NTOP
     if (inet_ntop (AF_INET6, & address -> host, name, nameLength) == NULL)
 #else
+#error "inet_ntop() is needed for IPv6 support"
     char * addr = inet_ntoa (* (struct in_addr *) & address -> host);
     if (addr != NULL)
     {
@@ -208,6 +226,7 @@ enet_address_get_host (const ENetAddress * address, char * name, size_t nameLeng
     if (err != EAI_NONAME)
       return 0;
 #else
+#warning "Really use gethostbyaddr() with IPv6? Not all platforms support it."
     struct in6_addr in;
     struct hostent * hostEntry = NULL;
 #ifdef HAS_GETHOSTBYADDR_R
