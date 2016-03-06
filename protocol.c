@@ -1812,7 +1812,7 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
     
     timeout += host -> serviceTime;
 
-    do
+    for (;;)
     {
        if (ENET_TIME_DIFFERENCE (host -> serviceTime, host -> bandwidthThrottleEpoch) >= ENET_HOST_BANDWIDTH_THROTTLE_INTERVAL)
          enet_host_bandwidth_throttle (host);
@@ -1896,13 +1896,13 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
 
           waitCondition = ENET_SOCKET_WAIT_RECEIVE | ENET_SOCKET_WAIT_INTERRUPT;
 
-          if (enet_socket_wait (host -> socket, & waitCondition, ENET_TIME_DIFFERENCE (timeout, host -> serviceTime)) != 0)
+          if (enet_socket_wait (host -> socket, & waitCondition, ENET_TIME_DIFFERENCE (timeout, host -> serviceTime) / 10) != 0)
             return -1;
        }
        while (waitCondition & ENET_SOCKET_WAIT_INTERRUPT);
 
        host -> serviceTime = enet_time_get ();
-    } while (waitCondition & ENET_SOCKET_WAIT_RECEIVE);
+    }
 
     return 0; 
 }
