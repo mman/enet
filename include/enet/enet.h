@@ -505,8 +505,8 @@ ENET_API int        enet_socketset_select (ENetSocket, ENetSocketSet *, ENetSock
     @returns the address of the given hostName in address on success
 */
 ENET_API int enet_address_set_host (ENetAddress * address, const char * hostName);
-
 ENET_API int enet_address_set_port (ENetAddress * address, enet_uint16 port);
+ENET_API int enet_address_equal (ENetAddress * address1, ENetAddress * address2);
 
 /** @} */
 

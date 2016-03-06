@@ -358,7 +358,7 @@ enet_socket_send (ENetSocket socket,
 
     if (address != NULL)
     {
-        msgHdr.msg_name = & address -> address;
+        msgHdr.msg_name = (void*) & address -> address;
         msgHdr.msg_namelen = address -> addressLength;
     }
 
