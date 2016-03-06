@@ -55,14 +55,13 @@ typedef enum _ENetSocketWait
 typedef enum _ENetSocketOption
 {
    ENET_SOCKOPT_NONBLOCK  = 1,
-   ENET_SOCKOPT_BROADCAST = 2,
-   ENET_SOCKOPT_RCVBUF    = 3,
-   ENET_SOCKOPT_SNDBUF    = 4,
-   ENET_SOCKOPT_REUSEADDR = 5,
-   ENET_SOCKOPT_RCVTIMEO  = 6,
-   ENET_SOCKOPT_SNDTIMEO  = 7,
-   ENET_SOCKOPT_ERROR     = 8,
-   ENET_SOCKOPT_NODELAY   = 9
+   ENET_SOCKOPT_RCVBUF,
+   ENET_SOCKOPT_SNDBUF,
+   ENET_SOCKOPT_REUSEADDR,
+   ENET_SOCKOPT_RCVTIMEO,
+   ENET_SOCKOPT_SNDTIMEO,
+   ENET_SOCKOPT_ERROR,
+   ENET_SOCKOPT_NODELAY,
 } ENetSocketOption;
 
 typedef enum _ENetSocketShutdown
@@ -72,24 +71,13 @@ typedef enum _ENetSocketShutdown
     ENET_SOCKET_SHUTDOWN_READ_WRITE = 2
 } ENetSocketShutdown;
 
-#define ENET_HOST_ANY       0
-#define ENET_HOST_BROADCAST 0xFFFFFFFFU
-#define ENET_PORT_ANY       0
-
 /**
  * Portable internet address structure. 
- *
- * The host must be specified in network byte-order, and the port must be in host 
- * byte-order. The constant ENET_HOST_ANY may be used to specify the default 
- * server host. The constant ENET_HOST_BROADCAST may be used to specify the
- * broadcast address (255.255.255.255).  This makes sense for enet_host_connect,
- * but not for enet_host_create.  Once a server responds to a broadcast, the
- * address is updated from ENET_HOST_BROADCAST to the server's actual IP address.
  */
 typedef struct _ENetAddress
 {
-   enet_uint32 host;
-   enet_uint16 port;
+   socklen_t addressLength;
+   struct sockaddr_storage address;
 } ENetAddress;
 
 /**
@@ -348,7 +336,6 @@ typedef int (ENET_CALLBACK * ENetInterceptCallback) (struct _ENetHost * host, st
     @sa enet_host_connect()
     @sa enet_host_service()
     @sa enet_host_flush()
-    @sa enet_host_broadcast()
     @sa enet_host_compress()
     @sa enet_host_compress_with_range_coder()
     @sa enet_host_channel_limit()
@@ -519,25 +506,7 @@ ENET_API int        enet_socketset_select (ENetSocket, ENetSocketSet *, ENetSock
 */
 ENET_API int enet_address_set_host (ENetAddress * address, const char * hostName);
 
-/** Gives the printable form of the IP address specified in the address parameter.
-    @param address    address printed
-    @param hostName   destination for name, must not be NULL
-    @param nameLength maximum length of hostName.
-    @returns the null-terminated name of the host in hostName on success
-    @retval 0 on success
-    @retval < 0 on failure
-*/
-ENET_API int enet_address_get_host_ip (const ENetAddress * address, char * hostName, size_t nameLength);
-
-/** Attempts to do a reverse lookup of the host field in the address parameter.
-    @param address    address used for reverse lookup
-    @param hostName   destination for name, must not be NULL
-    @param nameLength maximum length of hostName.
-    @returns the null-terminated name of the host in hostName on success
-    @retval 0 on success
-    @retval < 0 on failure
-*/
-ENET_API int enet_address_get_host (const ENetAddress * address, char * hostName, size_t nameLength);
+ENET_API int enet_address_set_port (ENetAddress * address, enet_uint16 port);
 
 /** @} */
 
@@ -552,7 +521,6 @@ ENET_API ENetPeer * enet_host_connect (ENetHost *, const ENetAddress *, size_t, 
 ENET_API int        enet_host_check_events (ENetHost *, ENetEvent *);
 ENET_API int        enet_host_service (ENetHost *, ENetEvent *, enet_uint32);
 ENET_API void       enet_host_flush (ENetHost *);
-ENET_API void       enet_host_broadcast (ENetHost *, enet_uint8, ENetPacket *);
 ENET_API void       enet_host_compress (ENetHost *, const ENetCompressor *);
 ENET_API int        enet_host_compress_with_range_coder (ENetHost * host);
 ENET_API void       enet_host_channel_limit (ENetHost *, size_t);
