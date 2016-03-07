@@ -123,7 +123,7 @@ enet_address_equal (ENetAddress * address1, ENetAddress * address2)
         sin6a = (struct sockaddr_in6 *) & address1 -> address;
         sin6b = (struct sockaddr_in6 *) & address2 -> address;
         return sin6a -> sin6_port == sin6b -> sin6_port &&
-            memcmp (& sin6a -> sin6_addr, & sin6b -> sin6_addr, sizeof (sin6a -> sin6_addr)) == sizeof(sin6a->sin6_addr);
+            ! memcmp (& sin6a -> sin6_addr, & sin6b -> sin6_addr, sizeof (sin6a -> sin6_addr));
     }
     default:
     {
@@ -184,27 +184,9 @@ enet_address_set_host (ENetAddress * address, const char * name)
 int
 enet_socket_bind (ENetSocket socket, const ENetAddress * address)
 {
-    struct sockaddr_in sinAny;
-    struct sockaddr *sin;
-    socklen_t sinLength;
-
-    if (address != NULL)
-    {
-       sin = (struct sockaddr *) & address -> address;
-       sinLength = address -> addressLength;
-    }
-    else
-    {
-       memset (& sinAny, 0, sizeof (struct sockaddr_in));
-       sinAny.sin_family = AF_INET;
-
-       sin = (struct sockaddr *) & sinAny;
-       sinLength = sizeof (sinAny);
-    }
-
     return bind (socket,
-                 sin,
-                 sinLength); 
+        (struct sockaddr *) & address -> address,
+        address -> addressLength);
 }
 
 int
