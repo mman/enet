@@ -6,6 +6,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <arpa/inet.h>
@@ -333,8 +334,46 @@ enet_socket_send (ENetSocket socket,
                   const ENetBuffer * buffers,
                   size_t bufferCount)
 {
-    struct msghdr msgHdr;
     int sentLength;
+    
+#ifdef NO_MSGAPI
+    void* sendBuffer;
+    size_t sendLength;
+    
+    if (bufferCount > 1)
+    {
+        size_t i;
+        
+        sendLength = 0;
+        for (i = 0; i < bufferCount; i++)
+        {
+            sendLength += buffers[i].dataLength;
+        }
+        
+        sendBuffer = malloc (sendLength);
+        if (sendBuffer == NULL)
+          return -1;
+        
+        sendLength = 0;
+        for (i = 0; i < bufferCount; i++)
+        {
+            memcpy (& ((unsigned char *)sendBuffer)[sendLength], buffers[i].data, buffers[i].dataLength);
+            sendLength += buffers[i].dataLength;
+        }
+    }
+    else
+    {
+        sendBuffer = buffers[0].data;
+        sendLength = buffers[0].dataLength;
+    }
+    
+    sentLength = sendto (socket, sendBuffer, sendLength, MSG_NOSIGNAL,
+        (struct sockaddr *) & address -> address, address -> addressLength);
+        
+    if (bufferCount > 1)
+      free(sendBuffer);
+#else
+    struct msghdr msgHdr;
 
     memset (& msgHdr, 0, sizeof (struct msghdr));
 
@@ -348,6 +387,7 @@ enet_socket_send (ENetSocket socket,
     msgHdr.msg_iovlen = bufferCount;
 
     sentLength = sendmsg (socket, & msgHdr, MSG_NOSIGNAL);
+#endif
     
     if (sentLength == -1)
     {
@@ -366,8 +406,26 @@ enet_socket_receive (ENetSocket socket,
                      ENetBuffer * buffers,
                      size_t bufferCount)
 {
-    struct msghdr msgHdr;
+#ifdef NO_MSGAPI
     int recvLength;
+    
+    // This will ONLY work with a single buffer!
+    
+    address -> addressLength = sizeof (address -> address);
+    recvLength = recvfrom (socket, buffers[0].data, buffers[0].dataLength, MSG_NOSIGNAL,
+        (struct sockaddr *) & address -> address, & address -> addressLength);
+    
+    if (recvLength == -1)
+    {
+       if (errno == EWOULDBLOCK)
+         return 0;
+     
+       return -1;
+    }
+    
+    return recvLength;
+#else
+    struct msghdr msgHdr;
 
     memset (& msgHdr, 0, sizeof (struct msghdr));
 
@@ -399,6 +457,7 @@ enet_socket_receive (ENetSocket socket,
 #endif
 
     return recvLength;
+#endif
 }
 
 int
