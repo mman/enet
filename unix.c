@@ -406,9 +406,9 @@ enet_socket_receive (ENetSocket socket,
                      ENetBuffer * buffers,
                      size_t bufferCount)
 {
-#ifdef NO_MSGAPI
     int recvLength;
-    
+
+#ifdef NO_MSGAPI
     // This will ONLY work with a single buffer!
     
     address -> addressLength = sizeof (address -> address);
