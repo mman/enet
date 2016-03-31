@@ -79,7 +79,11 @@ enet_deinitialize (void)
 enet_uint32
 enet_host_random_seed (void)
 {
-    return (enet_uint32) time (NULL);
+    struct timeval timeVal;
+    
+    gettimeofday (& timeVal, NULL);
+    
+    return (timeVal.tv_sec * 1000) ^ (timeVal.tv_usec / 1000);
 }
 
 enet_uint32
