@@ -159,6 +159,17 @@ enet_address_set_port (ENetAddress * address, enet_uint16 port)
 }
 
 int
+enet_address_set_address (ENetAddress * address, struct sockaddr * addr, socklen_t addrlen)
+{
+    if (addrlen > sizeof(struct sockaddr_storage))
+      return -1;
+
+    memcpy (&address->address, addr, addrlen);
+    address->addressLength = addrlen;
+    return 0;
+}
+
+int
 enet_address_set_host (ENetAddress * address, const char * name)
 {
     struct addrinfo hints, * resultList = NULL, * result = NULL;
