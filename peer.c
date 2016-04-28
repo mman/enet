@@ -114,7 +114,7 @@ enet_peer_send (ENetPeer * peer, enet_uint8 channelID, ENetPacket * packet)
 
    if (packet -> dataLength > fragmentLength)
    {
-      enet_uint32 fragmentCount = (packet -> dataLength + fragmentLength - 1) / fragmentLength,
+      enet_uint32 fragmentCount = (enet_uint32)((packet -> dataLength + fragmentLength - 1) / fragmentLength),
              fragmentNumber,
              fragmentOffset;
       enet_uint8 commandNumber;

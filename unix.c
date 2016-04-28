@@ -88,7 +88,7 @@ enet_time_get (void)
 
     gettimeofday (& timeVal, NULL);
 
-    return timeVal.tv_sec * 1000 + timeVal.tv_usec / 1000 - timeBase;
+    return (enet_uint32)(timeVal.tv_sec * 1000 + timeVal.tv_usec / 1000 - timeBase);
 }
 
 void
@@ -98,7 +98,7 @@ enet_time_set (enet_uint32 newTimeBase)
 
     gettimeofday (& timeVal, NULL);
     
-    timeBase = timeVal.tv_sec * 1000 + timeVal.tv_usec / 1000 - newTimeBase;
+    timeBase = (enet_uint32)(timeVal.tv_sec * 1000 + timeVal.tv_usec / 1000 - newTimeBase);
 }
 
 int
@@ -185,7 +185,7 @@ int
 enet_address_get_host_ip (const ENetAddress * address, char * name, size_t nameLength)
 {
 #ifdef HAS_INET_NTOP
-    if (inet_ntop (AF_INET6, & address -> host, name, nameLength) == NULL)
+    if (inet_ntop (AF_INET6, & address -> host, name, (socklen_t)nameLength) == NULL)
 #else
 #error "inet_ntop() is needed for IPv6 support"
     char * addr = inet_ntoa (* (struct in_addr *) & address -> host);
@@ -216,7 +216,7 @@ enet_address_get_host (const ENetAddress * address, char * name, size_t nameLeng
     sin.sin6_port = ENET_HOST_TO_NET_16 (address -> port);
     sin.sin6_addr = address -> host;
 
-    err = getnameinfo ((struct sockaddr *) & sin, sizeof (sin), name, nameLength, NULL, 0, NI_NAMEREQD);
+    err = getnameinfo ((struct sockaddr *) & sin, sizeof (sin), name, (socklen_t)nameLength, NULL, 0, NI_NAMEREQD);
     if (! err)
     {
         if (name != NULL && nameLength > 0 && ! memchr (name, '\0', nameLength))
@@ -472,9 +472,9 @@ enet_socket_send (ENetSocket socket,
     }
 
     msgHdr.msg_iov = (struct iovec *) buffers;
-    msgHdr.msg_iovlen = bufferCount;
+    msgHdr.msg_iovlen = (int)bufferCount;
 
-    sentLength = sendmsg (socket, & msgHdr, MSG_NOSIGNAL);
+    sentLength = (int)sendmsg (socket, & msgHdr, MSG_NOSIGNAL);
     
     if (sentLength == -1)
     {
@@ -506,9 +506,9 @@ enet_socket_receive (ENetSocket socket,
     }
 
     msgHdr.msg_iov = (struct iovec *) buffers;
-    msgHdr.msg_iovlen = bufferCount;
+    msgHdr.msg_iovlen = (int)bufferCount;
 
-    recvLength = recvmsg (socket, & msgHdr, MSG_NOSIGNAL);
+    recvLength = (int)recvmsg (socket, & msgHdr, MSG_NOSIGNAL);
 
     if (recvLength == -1)
     {
