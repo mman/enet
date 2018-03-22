@@ -88,7 +88,9 @@ enet_time_get (void)
 
     gettimeofday (& timeVal, NULL);
 
-    return (enet_uint32)(timeVal.tv_sec * 1000 + timeVal.tv_usec / 1000 - timeBase);
+    long long temporary = timeVal.tv_sec * (long long)1000 + timeVal.tv_usec / (long long)1000;
+
+    return (enet_uint32)(temporary - timeBase);
 }
 
 void
@@ -97,8 +99,10 @@ enet_time_set (enet_uint32 newTimeBase)
     struct timeval timeVal;
 
     gettimeofday (& timeVal, NULL);
-    
-    timeBase = (enet_uint32)(timeVal.tv_sec * 1000 + timeVal.tv_usec / 1000 - newTimeBase);
+
+    long long temporary = timeVal.tv_sec * (long long)1000 + timeVal.tv_usec / (long long)1000;
+
+    timeBase = (enet_uint32)(temporary - newTimeBase);
 }
 
 int
