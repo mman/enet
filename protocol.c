@@ -1657,9 +1657,9 @@ enet_protocol_send_outgoing_commands (ENetHost * host, ENetEvent * event, int ch
 
 #ifdef ENET_DEBUG
            printf ("peer %u: %f%%+-%f%% packet loss, %u+-%u ms round trip time, %f%% throttle, %u/%u outgoing, %u/%u incoming\n", currentPeer -> incomingPeerID, currentPeer -> packetLoss / (float) ENET_PEER_PACKET_LOSS_SCALE, currentPeer -> packetLossVariance / (float) ENET_PEER_PACKET_LOSS_SCALE, currentPeer -> roundTripTime, currentPeer -> roundTripTimeVariance, currentPeer -> packetThrottle / (float) ENET_PEER_PACKET_THROTTLE_SCALE, (unsigned int)enet_list_size (& currentPeer -> outgoingReliableCommands), (unsigned int)enet_list_size (& currentPeer -> outgoingUnreliableCommands), currentPeer -> channels != NULL ? (unsigned int)enet_list_size (& currentPeer -> channels -> incomingReliableCommands) : 0, currentPeer -> channels != NULL ? (unsigned int)enet_list_size (& currentPeer -> channels -> incomingUnreliableCommands) : 0);
-#endif
 #ifdef __ANDROID__
             __android_log_print(ANDROID_LOG_VERBOSE, "enet", "peer %u: %f%%+-%f%% packet loss, %u+-%u ms round trip time, %f%% throttle, %u/%u outgoing, %u/%u incoming\n", currentPeer -> incomingPeerID, currentPeer -> packetLoss / (float) ENET_PEER_PACKET_LOSS_SCALE, currentPeer -> packetLossVariance / (float) ENET_PEER_PACKET_LOSS_SCALE, currentPeer -> roundTripTime, currentPeer -> roundTripTimeVariance, currentPeer -> packetThrottle / (float) ENET_PEER_PACKET_THROTTLE_SCALE, (unsigned int)enet_list_size (& currentPeer -> outgoingReliableCommands), (unsigned int)enet_list_size (& currentPeer -> outgoingUnreliableCommands), currentPeer -> channels != NULL ? (unsigned int)enet_list_size (& currentPeer -> channels -> incomingReliableCommands) : 0, currentPeer -> channels != NULL ? (unsigned int)enet_list_size (& currentPeer -> channels -> incomingUnreliableCommands) : 0);
+#endif
 #endif
             currentPeer -> packetLossVariance -= currentPeer -> packetLossVariance / 4;
 
