@@ -25,8 +25,6 @@ int sceClibPrintf(const char *fmt, ...);
 
 #define SOMAXCONN 128
 #define MSG_NOSIGNAL 0
-#define EEINPROGRESS (SCE_NET_ERROR_EINPROGRESS & 0xFF)
-#define EEWOULDBLOCK (SCE_NET_ERROR_EWOULDBLOCK & 0xFF)
 
 static enet_uint32 timeBase = 0;
 
@@ -249,7 +247,7 @@ enet_socket_connect (ENetSocket socket, const ENetAddress * address)
 
     result = connect (socket, (struct sockaddr *) & address -> address, address -> addressLength);
     if (result < 0) {
-        if (errno == EEINPROGRESS)
+        if (errno == EINPROGRESS)
             return 0;
         result = -1;
     }
@@ -312,7 +310,7 @@ enet_socket_send (ENetSocket socket,
     sentLength = sendmsg (socket, & msgHdr, MSG_NOSIGNAL);
 
     if (sentLength < 0) {
-        if (errno == EEWOULDBLOCK)
+        if (errno == EWOULDBLOCK)
             return 0;
 
         sceClibPrintf("enet_socket_send failed! socket 0x%x error 0x%x\n", socket, sentLength);
@@ -348,7 +346,7 @@ enet_socket_receive (ENetSocket socket,
     recvLength = recvmsg (socket, & msgHdr, MSG_NOSIGNAL);
 
     if (recvLength < 0) {
-        if (errno == EEWOULDBLOCK)
+        if (errno == EWOULDBLOCK)
             return 0;
 
         sceClibPrintf("enet_socket_receive failed! socket 0x%x recvLength 0x%x\n", socket, recvLength);
