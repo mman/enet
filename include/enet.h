@@ -102,7 +102,7 @@
         long tv_nsec;
     };
     #endif
-    #define CLOCK_MONOTONIC 0
+    #define ENET_CLOCK_MONOTONIC 0
     #endif
 
     typedef SOCKET ENetSocket;
@@ -4779,7 +4779,7 @@ extern "C" {
             return (t);
         }
 
-        int clock_gettime(int X, struct timespec *tv) {
+        int enet_clock_gettime(int X, struct timespec *tv) {
             LARGE_INTEGER t;
             FILETIME f;
             double microseconds;
@@ -4817,9 +4817,9 @@ extern "C" {
             return (0);
         }
     #elif __APPLE__ && __MAC_OS_X_VERSION_MIN_REQUIRED < 101200
-        #define CLOCK_MONOTONIC 0
+        #define ENET_CLOCK_MONOTONIC 0
 
-        int clock_gettime(int X, struct timespec *ts) {
+        int enet_clock_gettime(int X, struct timespec *ts) {
             clock_serv_t cclock;
             mach_timespec_t mts;
 
@@ -4848,10 +4848,10 @@ extern "C" {
         static uint64_t start_time_ns = 0;
 
         struct timespec ts;
-    #if defined(CLOCK_MONOTONIC_RAW)
-        clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
+    #if defined(ENET_CLOCK_MONOTONIC_RAW)
+        enet_clock_gettime(ENET_CLOCK_MONOTONIC_RAW, &ts);
     #else
-        clock_gettime(CLOCK_MONOTONIC, &ts);
+        enet_clock_gettime(ENET_CLOCK_MONOTONIC, &ts);
     #endif
 
         static const uint64_t ns_in_s = 1000 * 1000 * 1000;
