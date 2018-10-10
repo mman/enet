@@ -489,7 +489,7 @@ extern "C" {
     typedef struct _ENetAddress {
         struct in6_addr host;
         enet_uint16 port;
-        enet_uint16 sin6_scope_id;
+        enet_uint32 sin6_scope_id;
     } ENetAddress;
 
     #define in6_equal(in6_addr_a, in6_addr_b) (memcmp(&in6_addr_a, &in6_addr_b, sizeof(struct in6_addr)) == 0)
