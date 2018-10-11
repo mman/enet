@@ -4832,6 +4832,9 @@ extern "C" {
 
             return 0;
         }
+    #elif __linux__
+        #define ENET_CLOCK_MONOTONIC CLOCK_MONOTONIC
+        #define enet_clock_gettime clock_gettime
     #endif
 
     enet_uint32 enet_time_get() {
