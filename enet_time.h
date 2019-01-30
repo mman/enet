@@ -1,5 +1,5 @@
 /** 
- @file  time.h
+ @file  enet_time.h
  @brief ENet time constants and macros
 */
 #ifndef __ENET_TIME_H__

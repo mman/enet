@@ -5,9 +5,10 @@
 #include <stdio.h>
 #include <string.h>
 #define ENET_BUILDING_LIB 1
-#include "enet/utility.h"
-#include "enet/enet_time.h"
 #include "enet/enet.h"
+
+#include "enet_time.h"
+#include "utility.h"
 
 #ifdef __ANDROID__
 #include <android/log.h>
