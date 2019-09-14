@@ -1009,7 +1009,7 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
 
        if (peer -> state == ENET_PEER_STATE_DISCONNECTED ||
            peer -> state == ENET_PEER_STATE_ZOMBIE ||
-           ! enet_address_equal(& host -> receivedAddress, & peer -> address) ||
+           /* ! enet_address_equal(& host -> receivedAddress, & peer -> address) || */
            (peer -> outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID &&
             sessionID != peer -> incomingSessionID))
          return 0;
