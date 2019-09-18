@@ -1461,7 +1461,13 @@ enet_protocol_check_timeouts (ENetHost * host, ENetPeer * peer, ENetEvent * even
           
        ++ peer -> packetsLost;
 
-       outgoingCommand -> roundTripTimeout *= 2;
+       // NOTE: original enet exponential backoff algorithm
+       // outgoingCommand -> roundTripTimeout *= 2;
+
+       // NOTE: more agressive resends based on discussion below
+       // NOTE: http://lists.cubik.org/pipermail/enet-discuss/2014-May/002308.html
+       outgoingCommand -> roundTripTimeout = peer -> roundTripTime + 4 * peer -> roundTripTimeVariance;
+       outgoingCommand -> roundTripTimeoutLimit = peer -> timeoutLimit * outgoingCommand -> roundTripTimeout;
 
        enet_list_insert (insertPosition, enet_list_remove (& outgoingCommand -> outgoingCommandList));
 
