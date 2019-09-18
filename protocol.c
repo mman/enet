@@ -5,9 +5,10 @@
 #include <stdio.h>
 #include <string.h>
 #define ENET_BUILDING_LIB 1
-#include "enet/utility.h"
-#include "enet/enet_time.h"
 #include "enet/enet.h"
+
+#include "enet_time.h"
+#include "utility.h"
 
 #ifdef __ANDROID__
 #include <android/log.h>
@@ -167,7 +168,10 @@ enet_protocol_remove_sent_unreliable_commands (ENetPeer * peer)
 {
     ENetOutgoingCommand * outgoingCommand;
 
-    while (! enet_list_empty (& peer -> sentUnreliableCommands))
+    if (enet_list_empty (& peer -> sentUnreliableCommands))
+      return;
+
+    do
     {
         outgoingCommand = (ENetOutgoingCommand *) enet_list_front (& peer -> sentUnreliableCommands);
         
@@ -186,7 +190,13 @@ enet_protocol_remove_sent_unreliable_commands (ENetPeer * peer)
         }
 
         enet_free (outgoingCommand);
-    }
+    } while (! enet_list_empty (& peer -> sentUnreliableCommands));
+
+    if (peer -> state == ENET_PEER_STATE_DISCONNECT_LATER &&
+        enet_list_empty (& peer -> outgoingReliableCommands) &&
+        enet_list_empty (& peer -> outgoingUnreliableCommands) &&
+        enet_list_empty (& peer -> sentReliableCommands))
+      enet_peer_disconnect (peer, peer -> eventData);
 }
 
 static ENetProtocolCommand
@@ -1410,7 +1420,8 @@ enet_protocol_send_unreliable_outgoing_commands (ENetHost * host, ENetPeer * pee
     if (peer -> state == ENET_PEER_STATE_DISCONNECT_LATER && 
         enet_list_empty (& peer -> outgoingReliableCommands) &&
         enet_list_empty (& peer -> outgoingUnreliableCommands) && 
-        enet_list_empty (& peer -> sentReliableCommands))
+        enet_list_empty (& peer -> sentReliableCommands) &&
+        enet_list_empty (& peer -> sentUnreliableCommands))
       enet_peer_disconnect (peer, peer -> eventData);
 }
 
@@ -1454,7 +1465,7 @@ enet_protocol_check_timeouts (ENetHost * host, ENetPeer * peer, ENetEvent * even
        // mman: beginning of changes based on discussion here:
        // mman: http://lists.cubik.org/pipermail/enet-discuss/2014-May/002308.html
 
-       // mman: outgoingCommand -> roundTripTimeout *= 2;
+       // enet: outgoingCommand -> roundTripTimeout *= 2;
        outgoingCommand -> roundTripTimeout = peer -> roundTripTime + 4 * peer -> roundTripTimeVariance;
        outgoingCommand -> roundTripTimeoutLimit = peer -> timeoutLimit * outgoingCommand -> roundTripTimeout;
 

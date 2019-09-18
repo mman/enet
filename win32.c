@@ -60,6 +60,32 @@ enet_time_set (enet_uint32 newTimeBase)
 }
 
 int
+enet_address_set_host_ip (ENetAddress * address, const char * name)
+{
+    enet_uint8 vals [4] = { 0, 0, 0, 0 };
+    int i;
+
+    for (i = 0; i < 4; ++ i)
+    {
+        const char * next = name + 1;
+        if (* name != '0')
+        {
+            long val = strtol (name, (char **) & next, 10);
+            if (val < 0 || val > 255 || next == name || next - name > 3)
+              return -1;
+            vals [i] = (enet_uint8) val;
+        }
+
+        if (* next != (i < 3 ? '.' : '\0'))
+          return -1;
+        name = next + 1;
+    }
+
+    memcpy (& address -> host, vals, sizeof (enet_uint32));
+    return 0;
+}
+
+int
 enet_address_set_host (ENetAddress * address, const char * name)
 {
     struct hostent * hostEntry = NULL;
