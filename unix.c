@@ -19,7 +19,7 @@
 #define ENET_BUILDING_LIB 1
 #include "enet/enet.h"
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
 #ifdef HAS_POLL
 #undef HAS_POLL
 #endif
@@ -44,9 +44,7 @@
 #ifndef HAS_GETNAMEINFO
 #define HAS_GETNAMEINFO 1
 #endif
-#endif
-
-#ifdef __vita__
+#elif defined(__vita__)
 #ifdef HAS_POLL
 #undef HAS_POLL
 #endif
@@ -73,6 +71,10 @@
 #endif
 #ifndef HAS_GETNAMEINFO
 #define HAS_GETNAMEINFO 1
+#endif
+#else
+#ifndef HAS_IOCTL
+#define HAS_IOCTL 1
 #endif
 #endif
 
