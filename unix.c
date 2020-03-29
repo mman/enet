@@ -319,6 +319,14 @@ enet_socket_set_option (ENetSocket socket, ENetSocketOption option, int value)
             result = setsockopt (socket, IPPROTO_TCP, TCP_NODELAY, (char *) & value, sizeof (int));
             break;
 
+        case ENET_SOCKOPT_QOS:
+#if defined(SO_NET_SERVICE_TYPE)
+            // iOS/macOS
+            value = value ? NET_SERVICE_TYPE_VO : NET_SERVICE_TYPE_BE;
+            result = setsockopt (socket, SOL_SOCKET, SO_NET_SERVICE_TYPE, (char *) & value, sizeof (int));
+#endif
+            break;
+
         default:
             break;
     }
