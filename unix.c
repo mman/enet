@@ -320,11 +320,27 @@ enet_socket_set_option (ENetSocket socket, ENetSocketOption option, int value)
             break;
 
         case ENET_SOCKOPT_QOS:
-#if defined(SO_NET_SERVICE_TYPE)
+#ifdef SO_NET_SERVICE_TYPE
             // iOS/macOS
             value = value ? NET_SERVICE_TYPE_VO : NET_SERVICE_TYPE_BE;
             result = setsockopt (socket, SOL_SOCKET, SO_NET_SERVICE_TYPE, (char *) & value, sizeof (int));
+#else
+#ifdef IP_TOS
+            // UNIX - IPv4
+            value = 0xE0; // DSCP: CS7
+            result = setsockopt (socket, IPPROTO_IP, IP_TOS, (char *) & value, sizeof (int));
 #endif
+#ifdef IPV6_TCLASS
+            // UNIX - IPv6
+            value = 0xE0; // DSCP: CS7
+            result = setsockopt (socket, IPPROTO_IPV6, IPV6_TCLASS, (char *) & value, sizeof (int));
+#endif
+#ifdef SO_PRIORITY
+            // Linux
+            value = 6; // Max priority without NET_CAP_ADMIN
+            result = setsockopt (socket, SOL_SOCKET, SO_PRIORITY, (char *) & value, sizeof (int));
+#endif
+#endif /* SO_NET_SERVICE_TYPE */
             break;
 
         default:
