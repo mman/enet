@@ -1293,7 +1293,7 @@ enet_protocol_receive_incoming_commands (ENetHost * host, ENetEvent * event)
        }
     }
 
-    return -1;
+    return 0;
 }
 
 static void
