@@ -8,8 +8,12 @@
 #include "enet/enet.h"
 #include <windows.h>
 #include <mmsystem.h>
+#include <qos2.h>
 
 static enet_uint32 timeBase = 0;
+static HANDLE qosHandle = INVALID_HANDLE_VALUE;
+static QOS_FLOWID qosFlowId;
+static BOOL qosAddedFlow;
 
 int
 enet_initialize (void)
@@ -36,6 +40,15 @@ enet_initialize (void)
 void
 enet_deinitialize (void)
 {
+    qosAddedFlow = FALSE;
+    qosFlowId = 0;
+
+    if (qosHandle != INVALID_HANDLE_VALUE)
+    {
+        QOSCloseHandle(qosHandle);
+        qosHandle = INVALID_HANDLE_VALUE;
+    }
+
     timeEndPeriod (1);
 
     WSACleanup ();
@@ -218,6 +231,32 @@ enet_socket_set_option (ENetSocket socket, ENetSocketOption option, int value)
             result = setsockopt (socket, IPPROTO_TCP, TCP_NODELAY, (char *) & value, sizeof (int));
             break;
 
+        case ENET_SOCKOPT_QOS:
+        {
+            if (value)
+            {
+                QOS_VERSION qosVersion;
+
+                qosVersion.MajorVersion = 1;
+                qosVersion.MinorVersion = 0;
+                if (!QOSCreateHandle(&qosVersion, &qosHandle))
+                {
+                    qosHandle = INVALID_HANDLE_VALUE;
+                }
+            }
+            else if (qosHandle != INVALID_HANDLE_VALUE)
+            {
+                QOSCloseHandle(qosHandle);
+                qosHandle = INVALID_HANDLE_VALUE;
+            }
+
+            qosAddedFlow = FALSE;
+            qosFlowId = 0;
+
+            result = 0;
+            break;
+        }
+
         default:
             break;
     }
@@ -291,6 +330,20 @@ enet_socket_send (ENetSocket socket,
                   size_t bufferCount)
 {
     DWORD sentLength;
+
+    if (!qosAddedFlow && qosHandle != INVALID_HANDLE_VALUE)
+    {
+        qosFlowId = 0; // Must be initialized to 0
+        QOSAddSocketToFlow(qosHandle,
+                           socket,
+                           (struct sockaddr *)&address->address,
+                           QOSTrafficTypeControl,
+                           QOS_NON_ADAPTIVE_FLOW,
+                           &qosFlowId);
+
+        // Even if we failed, don't try again
+        qosAddedFlow = TRUE;
+    }
 
     if (WSASendTo (socket, 
                    (LPWSABUF) buffers,
