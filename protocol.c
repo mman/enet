@@ -312,9 +312,9 @@ enet_protocol_handle_connect (ENetHost * host, ENetProtocolHeader * header, ENet
         }
         else 
         if (currentPeer -> state != ENET_PEER_STATE_CONNECTING &&
-            in6_equal(currentPeer -> address.host , host -> receivedAddress.host))
+            in6_equal(currentPeer -> peerAddress.host , host -> peerAddress.host))
         {
-            if (currentPeer -> address.port == host -> receivedAddress.port &&
+            if (currentPeer -> peerAddress.port == host -> peerAddress.port &&
                 currentPeer -> connectID == command -> connect.connectID)
               return NULL;
 
@@ -333,7 +333,8 @@ enet_protocol_handle_connect (ENetHost * host, ENetProtocolHeader * header, ENet
     peer -> channelCount = channelCount;
     peer -> state = ENET_PEER_STATE_ACKNOWLEDGING_CONNECT;
     peer -> connectID = command -> connect.connectID;
-    peer -> address = host -> receivedAddress;
+    peer -> peerAddress = host -> peerAddress;
+    peer -> myAddress = host -> myAddress;
     peer -> outgoingPeerID = ENET_NET_TO_HOST_16 (command -> connect.outgoingPeerID);
     peer -> incomingBandwidth = ENET_NET_TO_HOST_32 (command -> connect.incomingBandwidth);
     peer -> outgoingBandwidth = ENET_NET_TO_HOST_32 (command -> connect.outgoingBandwidth);
@@ -1050,8 +1051,8 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
 
        if (peer -> state == ENET_PEER_STATE_DISCONNECTED ||
            peer -> state == ENET_PEER_STATE_ZOMBIE ||
-           ((!in6_equal(host -> receivedAddress.host , peer -> address.host) ||
-             host -> receivedAddress.port != peer -> address.port) &&
+           ((!in6_equal(host -> peerAddress.host , peer -> peerAddress.host) ||
+             host -> peerAddress.port != peer -> peerAddress.port) &&
              1 /* no broadcast in ipv6  !in6_equal(peer -> address.host , ENET_HOST_BROADCAST)*/) ||
            (peer -> outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID &&
             sessionID != peer -> incomingSessionID))
@@ -1094,8 +1095,8 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
        
     if (peer != NULL)
     {
-       peer -> address.host = host -> receivedAddress.host;
-       peer -> address.port = host -> receivedAddress.port;
+       peer -> peerAddress.host = host -> peerAddress.host;
+       peer -> peerAddress.port = host -> peerAddress.port;
        peer -> incomingDataTotal += host -> receivedDataLength;
     }
     
@@ -1246,9 +1247,10 @@ enet_protocol_receive_incoming_commands (ENetHost * host, ENetEvent * event)
        buffer.dataLength = sizeof (host -> packetData [0]);
 
        receivedLength = enet_socket_receive (host -> socket,
-                                             & host -> receivedAddress,
+                                             & host -> peerAddress,
                                              & buffer,
-                                             1);
+                                             1,
+                                             & host -> myAddress);
 
        if (receivedLength < 0)
          return -1;
@@ -1772,7 +1774,7 @@ enet_protocol_send_outgoing_commands (ENetHost * host, ENetEvent * event, int ch
 
         currentPeer -> lastSendTime = host -> serviceTime;
 
-        sentLength = enet_socket_send (host -> socket, & currentPeer -> address, host -> buffers, host -> bufferCount);
+        sentLength = enet_socket_send (host -> socket, & currentPeer -> peerAddress, host -> buffers, host -> bufferCount, & currentPeer -> myAddress);
 
         enet_protocol_remove_sent_unreliable_commands (currentPeer);
 

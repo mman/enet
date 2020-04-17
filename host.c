@@ -51,6 +51,7 @@ enet_host_create (const ENetAddress * address, size_t peerCount, size_t channelL
     host -> socket = enet_socket_create (ENET_SOCKET_TYPE_DATAGRAM);
 	if( host -> socket > ENET_SOCKET_NULL ) {
         enet_socket_set_option(host->socket, ENET_SOCKOPT_IPV6_V6ONLY, 0);
+        enet_socket_set_option(host->socket, ENET_SOCKOPT_IPV6_RECVPKTINFO, 1);
         enet_socket_set_option(host->socket, ENET_SOCKOPT_REUSEADDR, 1);
     }
     if (host -> socket == ENET_SOCKET_NULL || (address != NULL && enet_socket_bind (host -> socket, address) < 0))
@@ -92,8 +93,8 @@ enet_host_create (const ENetAddress * address, size_t peerCount, size_t channelL
     host -> commandCount = 0;
     host -> bufferCount = 0;
     host -> checksum = NULL;
-    host -> receivedAddress.host = in6addr_any;
-    host -> receivedAddress.port = 0;
+    host -> peerAddress.host = in6addr_any;
+    host -> peerAddress.port = 0;
     host -> receivedData = NULL;
     host -> receivedDataLength = 0;
      
@@ -204,7 +205,7 @@ enet_host_connect (ENetHost * host, const ENetAddress * address, size_t channelC
       return NULL;
     currentPeer -> channelCount = channelCount;
     currentPeer -> state = ENET_PEER_STATE_CONNECTING;
-    currentPeer -> address = * address;
+    currentPeer -> peerAddress = * address;
     currentPeer -> connectID = ++ host -> randomSeed;
 
     if (host -> outgoingBandwidth == 0)

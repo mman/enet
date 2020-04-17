@@ -4,10 +4,13 @@
 */
 #ifndef _WIN32
 
+#define __APPLE_USE_RFC_3542 1
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <netdb.h>
 #include <unistd.h>
@@ -387,6 +390,10 @@ enet_socket_set_option (ENetSocket socket, ENetSocketOption option, int value)
             result = setsockopt (socket, IPPROTO_IPV6, IPV6_V6ONLY, (char *) & value, sizeof (int));
             break;
 
+        case ENET_SOCKOPT_IPV6_RECVPKTINFO:
+            result = setsockopt (socket, IPPROTO_IPV6, IPV6_RECVPKTINFO, (char *) & value, sizeof (int));
+            break;
+
         default:
             break;
     }
@@ -470,27 +477,48 @@ enet_socket_destroy (ENetSocket socket)
 
 int
 enet_socket_send (ENetSocket socket,
-                  const ENetAddress * address,
+                  const ENetAddress * destinationAddress,
                   const ENetBuffer * buffers,
-                  size_t bufferCount)
+                  size_t bufferCount,
+                  struct in6_pktinfo * sourceAddress)
 {
     struct msghdr msgHdr;
     struct sockaddr_in6 sin;
     int sentLength;
+    struct cmsghdr *control_msg;
+    char control_buf[256];
+    struct in6_pktinfo *packet;
 
     memset (& msgHdr, 0, sizeof (struct msghdr));
 
-    if (address != NULL)
+    if (destinationAddress != NULL)
     {
         memset (& sin, 0, sizeof (struct sockaddr_in6));
 
         sin.sin6_family = AF_INET6;
-        sin.sin6_port = ENET_HOST_TO_NET_16 (address -> port);
-        sin.sin6_addr = address -> host;
-        sin.sin6_scope_id = address -> sin6_scope_id;
+        sin.sin6_port = ENET_HOST_TO_NET_16 (destinationAddress -> port);
+        sin.sin6_addr = destinationAddress -> host;
+        sin.sin6_scope_id = destinationAddress -> sin6_scope_id;
 
         msgHdr.msg_name = & sin;
         msgHdr.msg_namelen = sizeof (struct sockaddr_in6);
+    }
+
+    if (sourceAddress != NULL)
+    {
+        msgHdr.msg_control = control_buf;
+        msgHdr.msg_controllen = sizeof(control_buf);
+
+        control_msg = CMSG_FIRSTHDR(&msgHdr);
+        control_msg->cmsg_level = IPPROTO_IPV6;
+        control_msg->cmsg_type = IPV6_PKTINFO;
+        control_msg->cmsg_len = CMSG_LEN(sizeof(*packet));
+
+        packet = (struct in6_pktinfo *) CMSG_DATA(control_msg);
+        memset(packet, 0, sizeof(*packet));
+        packet->ipi6_addr = sourceAddress->ipi6_addr;
+        packet->ipi6_ifindex = sourceAddress->ipi6_ifindex;
+        msgHdr.msg_controllen = control_msg->cmsg_len;
     }
 
     msgHdr.msg_iov = (struct iovec *) buffers;
@@ -511,17 +539,29 @@ enet_socket_send (ENetSocket socket,
 
 int
 enet_socket_receive (ENetSocket socket,
-                     ENetAddress * address,
+                     ENetAddress * sourceAddress,
                      ENetBuffer * buffers,
-                     size_t bufferCount)
+                     size_t bufferCount,
+                     struct in6_pktinfo * destinationAddress)
 {
     struct msghdr msgHdr;
     struct sockaddr_in6 sin;
     int recvLength;
 
+    struct cmsghdr *cmptr;
+    union {
+        struct cmsghdr cm;
+        char control[CMSG_SPACE(sizeof(struct in6_addr)) +
+                     CMSG_SPACE(sizeof(struct in6_pktinfo))] ;
+    } control_un;
+
     memset (& msgHdr, 0, sizeof (struct msghdr));
 
-    if (address != NULL)
+    msgHdr.msg_control = control_un.control;
+    msgHdr.msg_controllen = sizeof(control_un.control);
+    msgHdr.msg_flags = 0;
+
+    if (sourceAddress != NULL)
     {
         msgHdr.msg_name = & sin;
         msgHdr.msg_namelen = sizeof (struct sockaddr_in6);
@@ -545,11 +585,23 @@ enet_socket_receive (ENetSocket socket,
       return -1;
 #endif
 
-    if (address != NULL)
+    if (sourceAddress != NULL)
     {
-        address -> host = sin.sin6_addr;
-        address -> port = ENET_NET_TO_HOST_16 (sin.sin6_port);
-        address -> sin6_scope_id = sin.sin6_scope_id;
+        sourceAddress -> host = sin.sin6_addr;
+        sourceAddress -> port = ENET_NET_TO_HOST_16 (sin.sin6_port);
+        sourceAddress -> sin6_scope_id = sin.sin6_scope_id;
+    }
+
+    if (destinationAddress != NULL)
+    {
+        for (cmptr = CMSG_FIRSTHDR(&msgHdr); cmptr != NULL; cmptr = CMSG_NXTHDR(&msgHdr, cmptr)) {
+            if (cmptr->cmsg_level == IPPROTO_IPV6 && cmptr->cmsg_type == IPV6_PKTINFO) {
+                struct in6_pktinfo *p = (struct in6_pktinfo *) CMSG_DATA(cmptr);
+                destinationAddress->ipi6_addr = p->ipi6_addr;
+                destinationAddress->ipi6_addr = p->ipi6_addr;
+                continue;
+            }
+        }
     }
 
     return recvLength;
