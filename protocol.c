@@ -1097,6 +1097,7 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
     {
        peer -> peerAddress.host = host -> peerAddress.host;
        peer -> peerAddress.port = host -> peerAddress.port;
+       peer -> myAddress = host -> myAddress;
        peer -> incomingDataTotal += host -> receivedDataLength;
     }
     
