@@ -4,8 +4,6 @@
 */
 #ifndef _WIN32
 
-#define __APPLE_USE_RFC_3542 1
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -46,6 +44,7 @@
 #ifndef HAS_GETNAMEINFO
 #define HAS_GETNAMEINFO 1
 #endif
+#define __APPLE_USE_RFC_3542 1
 #endif
 
 #ifdef HAS_FCNTL

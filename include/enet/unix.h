@@ -5,7 +5,9 @@
 #ifndef __ENET_UNIX_H__
 #define __ENET_UNIX_H__
 
+#ifdef __APPLE__
 #define __APPLE_USE_RFC_3542 1
+#endif
 
 #include <stdlib.h>
 #include <sys/time.h>
