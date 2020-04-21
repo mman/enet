@@ -503,7 +503,7 @@ enet_socket_send (ENetSocket socket,
         msgHdr.msg_namelen = sizeof (struct sockaddr_in6);
     }
 
-    if (sourceAddress != NULL)
+    if (sourceAddress != NULL && !in6_equal(sourceAddress->host, in6addr_any))
     {
         msgHdr.msg_control = control_buf;
         msgHdr.msg_controllen = sizeof(control_buf);
