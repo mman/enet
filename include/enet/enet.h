@@ -275,8 +275,8 @@ typedef struct _ENetPeer
    enet_uint32   connectID;
    enet_uint8    outgoingSessionID;
    enet_uint8    incomingSessionID;
-   struct in6_pktinfo myAddress;     /**< my address the peer is using to talk to me */
-   ENetAddress   peerAddress;            /**< Internet address of the peer */
+   ENetAddress   myAddress;          /**< Internet address the peer is using to talk to me */
+   ENetAddress   peerAddress;        /**< Internet address of the peer */
    void *        data;               /**< Application private data, may be freely modified */
    ENetPeerState state;
    ENetChannel * channels;
@@ -394,7 +394,7 @@ typedef struct _ENetHost
    ENetChecksumCallback checksum;                    /**< callback the user can set to enable packet checksums for this host */
    ENetCompressor       compressor;
    enet_uint8           packetData [2][ENET_PROTOCOL_MAXIMUM_MTU];
-   struct in6_pktinfo   myAddress;
+   ENetAddress          myAddress;
    ENetAddress          peerAddress;
    enet_uint8 *         receivedData;
    size_t               receivedDataLength;
@@ -510,8 +510,8 @@ ENET_API int        enet_socket_get_address (ENetSocket, ENetAddress *);
 ENET_API int        enet_socket_listen (ENetSocket, int);
 ENET_API ENetSocket enet_socket_accept (ENetSocket, ENetAddress *);
 ENET_API int        enet_socket_connect (ENetSocket, const ENetAddress *);
-ENET_API int        enet_socket_send (ENetSocket, const ENetAddress *, const ENetBuffer *, size_t, struct in6_pktinfo *);
-ENET_API int        enet_socket_receive (ENetSocket, ENetAddress *, ENetBuffer *, size_t, struct in6_pktinfo *);
+ENET_API int        enet_socket_send (ENetSocket, const ENetAddress *, const ENetBuffer *, size_t, const ENetAddress *);
+ENET_API int        enet_socket_receive (ENetSocket, ENetAddress *, ENetBuffer *, size_t, ENetAddress *);
 ENET_API int        enet_socket_wait (ENetSocket, enet_uint32 *, enet_uint32);
 ENET_API int        enet_socket_set_option (ENetSocket, ENetSocketOption, int);
 ENET_API int        enet_socket_get_option (ENetSocket, ENetSocketOption, int *);

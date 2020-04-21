@@ -479,7 +479,7 @@ enet_socket_send (ENetSocket socket,
                   const ENetAddress * destinationAddress,
                   const ENetBuffer * buffers,
                   size_t bufferCount,
-                  struct in6_pktinfo * sourceAddress)
+                  const ENetAddress * sourceAddress)
 {
     struct msghdr msgHdr;
     struct sockaddr_in6 sin;
@@ -515,8 +515,8 @@ enet_socket_send (ENetSocket socket,
 
         packet = (struct in6_pktinfo *) CMSG_DATA(control_msg);
         memset(packet, 0, sizeof(*packet));
-        packet->ipi6_addr = sourceAddress->ipi6_addr;
-        packet->ipi6_ifindex = sourceAddress->ipi6_ifindex;
+        packet->ipi6_addr = sourceAddress->host;
+        packet->ipi6_ifindex = sourceAddress->sin6_scope_id;
         msgHdr.msg_controllen = control_msg->cmsg_len;
     }
 
@@ -541,7 +541,7 @@ enet_socket_receive (ENetSocket socket,
                      ENetAddress * sourceAddress,
                      ENetBuffer * buffers,
                      size_t bufferCount,
-                     struct in6_pktinfo * destinationAddress)
+                     ENetAddress * destinationAddress)
 {
     struct msghdr msgHdr;
     struct sockaddr_in6 sin;
@@ -596,8 +596,8 @@ enet_socket_receive (ENetSocket socket,
         for (cmptr = CMSG_FIRSTHDR(&msgHdr); cmptr != NULL; cmptr = CMSG_NXTHDR(&msgHdr, cmptr)) {
             if (cmptr->cmsg_level == IPPROTO_IPV6 && cmptr->cmsg_type == IPV6_PKTINFO) {
                 struct in6_pktinfo *p = (struct in6_pktinfo *) CMSG_DATA(cmptr);
-                destinationAddress->ipi6_addr = p->ipi6_addr;
-                destinationAddress->ipi6_addr = p->ipi6_addr;
+                destinationAddress->host = p->ipi6_addr;
+                destinationAddress->sin6_scope_id = p->ipi6_ifindex;
                 continue;
             }
         }
