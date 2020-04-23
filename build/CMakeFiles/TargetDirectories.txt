@@ -1,0 +1,3 @@
+/Users/mman/Projects/enet/build/CMakeFiles/rebuild_cache.dir
+/Users/mman/Projects/enet/build/CMakeFiles/edit_cache.dir
+/Users/mman/Projects/enet/build/CMakeFiles/enet.dir
