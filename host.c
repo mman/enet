@@ -243,9 +243,9 @@ enet_host_connect (ENetHost * host, const ENetAddress * address, size_t channelC
     } else {
         currentPeer -> mtu = host -> mtu;
     }
-    if (mtu < ENET_PROTOCOL_MINIMUM_MTU)
+    if (currentPeer -> mtu < ENET_PROTOCOL_MINIMUM_MTU)
         currentPeer -> mtu = ENET_PROTOCOL_MINIMUM_MTU;
-    if (mtu > ENET_PROTOCOL_MAXIMUM_MTU)
+    if (currentPeer -> mtu > ENET_PROTOCOL_MAXIMUM_MTU)
         currentPeer -> mtu = ENET_PROTOCOL_MAXIMUM_MTU;
 
     command.header.command = ENET_PROTOCOL_COMMAND_CONNECT | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
