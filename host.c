@@ -172,12 +172,13 @@ enet_host_destroy (ENetHost * host)
     @param address destination for the connection
     @param channelCount number of channels to allocate
     @param data user data supplied to the receiving host 
+    @param mtu mtu to use for this connection, specify 0 to use host mtu
     @returns a peer representing the foreign host on success, NULL on failure
     @remarks The peer returned will have not completed the connection until enet_host_service()
     notifies of an ENET_EVENT_TYPE_CONNECT event for the peer.
 */
 ENetPeer *
-enet_host_connect (ENetHost * host, const ENetAddress * address, size_t channelCount, enet_uint32 data)
+enet_host_connect (ENetHost * host, const ENetAddress * address, size_t channelCount, enet_uint32 data, enet_uint32 mtu)
 {
     ENetPeer * currentPeer;
     ENetChannel * channel;
@@ -236,7 +237,16 @@ enet_host_connect (ENetHost * host, const ENetAddress * address, size_t channelC
         channel -> usedReliableWindows = 0;
         memset (channel -> reliableWindows, 0, sizeof (channel -> reliableWindows));
     }
-        
+
+    // override host mtu for this peer
+    if (mtu > 0) {
+        currentPeer -> mtu = mtu;
+        if (mtu < ENET_PROTOCOL_MINIMUM_MTU)
+            currentPeer -> mtu = ENET_PROTOCOL_MINIMUM_MTU;
+        if (mtu > ENET_PROTOCOL_MAXIMUM_MTU)
+            currentPeer -> mtu = ENET_PROTOCOL_MAXIMUM_MTU;
+    }
+
     command.header.command = ENET_PROTOCOL_COMMAND_CONNECT | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
     command.header.channelID = 0xFF;
     command.connect.outgoingPeerID = ENET_HOST_TO_NET_16 (currentPeer -> incomingPeerID);
@@ -252,7 +262,7 @@ enet_host_connect (ENetHost * host, const ENetAddress * address, size_t channelC
     command.connect.packetThrottleDeceleration = ENET_HOST_TO_NET_32 (currentPeer -> packetThrottleDeceleration);
     command.connect.connectID = currentPeer -> connectID;
     command.connect.data = ENET_HOST_TO_NET_32 (data);
- 
+
     enet_peer_queue_outgoing_command (currentPeer, & command, NULL, 0, 0);
 
     return currentPeer;
