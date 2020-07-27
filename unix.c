@@ -75,6 +75,9 @@
 #ifndef HAS_IOCTL
 #define HAS_IOCTL 1
 #endif
+#ifndef HAS_POLL
+#define HAS_POLL 1
+#endif
 #endif
 
 #ifdef HAS_FCNTL
