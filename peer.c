@@ -373,7 +373,9 @@ enet_peer_reset (ENetPeer * peer)
     enet_peer_on_disconnect (peer);
         
     peer -> outgoingPeerID = ENET_PROTOCOL_MAXIMUM_PEER_ID;
-    peer -> connectID = 0;
+    // mman: do not reset connectID
+    // mman: so that we can examine it after disconnect
+    // peer -> connectID = 0;
 
     peer -> state = ENET_PEER_STATE_DISCONNECTED;
 
