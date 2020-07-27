@@ -19,8 +19,8 @@
 #include "enet/enet.h"
 
 #if defined(__APPLE__)
-#ifdef HAS_POLL
-#undef HAS_POLL
+#ifndef HAS_POLL
+#define HAS_POLL 1
 #endif
 #ifndef HAS_FCNTL
 #define HAS_FCNTL 1
