@@ -124,8 +124,7 @@ enet_host_create (int addressFamily, const ENetAddress * address, size_t peerCou
        enet_list_clear (& currentPeer -> acknowledgements);
        enet_list_clear (& currentPeer -> sentReliableCommands);
        enet_list_clear (& currentPeer -> sentUnreliableCommands);
-       enet_list_clear (& currentPeer -> outgoingReliableCommands);
-       enet_list_clear (& currentPeer -> outgoingUnreliableCommands);
+       enet_list_clear (& currentPeer -> outgoingCommands);
        enet_list_clear (& currentPeer -> dispatchedCommands);
 
        enet_peer_reset (currentPeer);
