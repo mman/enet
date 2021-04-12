@@ -71,6 +71,34 @@
 #ifndef HAS_GETNAMEINFO
 #define HAS_GETNAMEINFO 1
 #endif
+#elif defined(__WIIU__)
+#ifndef HAS_POLL
+#define HAS_POLL 1
+#endif
+#ifndef HAS_FCNTL
+#define HAS_FCNTL 1
+#endif
+#ifndef HAS_IOCTL
+#define HAS_IOCTL 1
+#endif
+#ifndef HAS_INET_PTON
+#define HAS_INET_PTON 1
+#endif
+#ifndef HAS_INET_NTOP
+#define HAS_INET_NTOP 1
+#endif
+#ifndef HAS_SOCKLEN_T
+#define HAS_SOCKLEN_T 1
+#endif
+#ifndef HAS_GETADDRINFO
+#define HAS_GETADDRINFO 1
+#endif
+#ifndef HAS_GETNAMEINFO
+#define HAS_GETNAMEINFO 1
+#endif
+#ifndef NO_MSGAPI
+#define NO_MSGAPI 1
+#endif
 #else
 #ifndef HAS_IOCTL
 #define HAS_IOCTL 1
@@ -163,6 +191,7 @@ enet_address_equal (ENetAddress * address1, ENetAddress * address2)
         return sin1 -> sin_port == sin2 -> sin_port &&
             sin1 -> sin_addr.s_addr == sin2 -> sin_addr.s_addr;
     }
+#ifdef AF_INET6
     case AF_INET6:
     {
         struct sockaddr_in6 *sin6a, *sin6b;
@@ -171,6 +200,7 @@ enet_address_equal (ENetAddress * address1, ENetAddress * address2)
         return sin6a -> sin6_port == sin6b -> sin6_port &&
             ! memcmp (& sin6a -> sin6_addr, & sin6b -> sin6_addr, sizeof (sin6a -> sin6_addr));
     }
+#endif
     default:
     {
         return 0;
@@ -187,12 +217,14 @@ enet_address_set_port (ENetAddress * address, enet_uint16 port)
         sin -> sin_port = ENET_HOST_TO_NET_16 (port);
         return 0;
     }
+#ifdef AF_INET6
     else if (address -> address.ss_family == AF_INET6)
     {
         struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *) &address -> address;
         sin6 -> sin6_port = ENET_HOST_TO_NET_16 (port);
         return 0;
     }
+#endif
     else
     {
         return -1;
@@ -299,6 +331,7 @@ enet_socket_set_option (ENetSocket socket, ENetSocketOption option, int value)
             result = setsockopt (socket, SOL_SOCKET, SO_SNDBUF, (char *) & value, sizeof (int));
             break;
 
+#ifndef __WIIU__
         case ENET_SOCKOPT_RCVTIMEO:
         {
             struct timeval timeVal;
@@ -316,6 +349,7 @@ enet_socket_set_option (ENetSocket socket, ENetSocketOption option, int value)
             result = setsockopt (socket, SOL_SOCKET, SO_SNDTIMEO, (char *) & timeVal, sizeof (struct timeval));
             break;
         }
+#endif
 
         case ENET_SOCKOPT_NODELAY:
             result = setsockopt (socket, IPPROTO_TCP, TCP_NODELAY, (char *) & value, sizeof (int));
