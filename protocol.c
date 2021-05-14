@@ -1375,14 +1375,9 @@ enet_protocol_check_timeouts (ENetHost * host, ENetPeer * peer, ENetEvent * even
           
        ++ peer -> packetsLost;
 
-       // mman: beginning of changes based on discussion here:
-       // mman: http://lists.cubik.org/pipermail/enet-discuss/2014-May/002308.html
-
-       // enet: outgoingCommand -> roundTripTimeout *= 2;
-       outgoingCommand -> roundTripTimeout = peer -> roundTripTime + 4 * peer -> roundTripTimeVariance;
-       outgoingCommand -> roundTripTimeoutLimit = peer -> timeoutLimit * outgoingCommand -> roundTripTimeout;
-
-       // mman: end of changes
+       outgoingCommand -> roundTripTimeout *= 2;
+       if (outgoingCommand -> roundTripTimeout > outgoingCommand -> roundTripTimeoutLimit)
+         outgoingCommand -> roundTripTimeout = outgoingCommand -> roundTripTimeoutLimit;
 
        enet_list_insert (insertPosition, enet_list_remove (& outgoingCommand -> outgoingCommandList));
 
