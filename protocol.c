@@ -1037,9 +1037,6 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
 
        if (peer -> state == ENET_PEER_STATE_DISCONNECTED ||
            peer -> state == ENET_PEER_STATE_ZOMBIE ||
-           ((!in6_equal(host -> peerAddress.host , peer -> peerAddress.host) ||
-             host -> peerAddress.port != peer -> peerAddress.port) &&
-             1 /* no broadcast in ipv6  !in6_equal(peer -> address.host , ENET_HOST_BROADCAST)*/) ||
            (peer -> outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID &&
             sessionID != peer -> incomingSessionID))
          return 0;
