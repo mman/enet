@@ -621,7 +621,10 @@ enet_peer_queue_acknowledgement (ENetPeer * peer, const ENetProtocol * command, 
 void
 enet_peer_setup_outgoing_command (ENetPeer * peer, ENetOutgoingCommand * outgoingCommand)
 {
-    ENetChannel * channel = & peer -> channels [outgoingCommand -> command.header.channelID];
+    ENetChannel * channel = NULL;
+    if (peer -> channels != NULL) {
+        channel = & peer -> channels [outgoingCommand -> command.header.channelID];
+    }
     
     peer -> outgoingDataTotal += enet_protocol_command_size (outgoingCommand -> command.header.command) + outgoingCommand -> fragmentLength;
 
