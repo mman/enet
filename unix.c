@@ -171,7 +171,7 @@ enet_address_set_host (ENetAddress * address, const char * name)
     char buffer [2048];
     int errnum;
 
-#if defined(linux) || defined(__linux) || defined(__linux__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
+#if defined(linux) || defined(__linux) || defined(__linux__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__) || defined(__GNU__)
     gethostbyname_r (name, & hostData, buffer, sizeof (buffer), & hostEntry, & errnum);
 #else
     hostEntry = gethostbyname_r (name, & hostData, buffer, sizeof (buffer), & errnum);
@@ -254,8 +254,8 @@ enet_address_get_host (const ENetAddress * address, char * name, size_t nameLeng
 
     in = address -> host;
 
-#if defined(linux) || defined(__linux) || defined(__linux__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__)
-    gethostbyaddr_r ((char *) & in, sizeof (struct in6_addr), AF_INET6, & hostData, buffer, sizeof (buffer), & hostEntry, & errnum);
+#if defined(linux) || defined(__linux) || defined(__linux__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__DragonFly__) || defined(__GNU__)
+    gethostbyaddr_r ((char *) & in, sizeof (struct in_addr), AF_INET, & hostData, buffer, sizeof (buffer), & hostEntry, & errnum);
 #else
     hostEntry = gethostbyaddr_r ((char *) & in, sizeof (struct in6_addr), AF_INET6, & hostData, buffer, sizeof (buffer), & errnum);
 #endif
@@ -413,6 +413,10 @@ enet_socket_set_option (ENetSocket socket, ENetSocketOption option, int value)
 #endif /* SO_NET_SERVICE_TYPE */
             break;
 
+        case ENET_SOCKOPT_TTL:
+            result = setsockopt (socket, IPPROTO_IP, IP_TTL, (char *) & value, sizeof (int));
+            break;
+
         default:
             break;
     }
@@ -429,6 +433,11 @@ enet_socket_get_option (ENetSocket socket, ENetSocketOption option, int * value)
         case ENET_SOCKOPT_ERROR:
             len = sizeof (int);
             result = getsockopt (socket, SOL_SOCKET, SO_ERROR, value, & len);
+            break;
+
+        case ENET_SOCKOPT_TTL:
+            len = sizeof (int);
+            result = getsockopt (socket, IPPROTO_IP, IP_TTL, (char *) value, & len);
             break;
 
         default:
