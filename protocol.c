@@ -7,8 +7,8 @@
 #define ENET_BUILDING_LIB 1
 #include "enet/enet.h"
 
-#include "enet/time.h"
-#include "enet/utility.h"
+#include "enet_time.h"
+#include "enet_utility.h"
 
 #ifdef __ANDROID__
 #include <android/log.h>
