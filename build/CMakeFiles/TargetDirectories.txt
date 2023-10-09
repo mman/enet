@@ -1,7 +1,0 @@
-/Users/mman/Developer/enet/build/CMakeFiles/enet.dir
-/Users/mman/Developer/enet/build/CMakeFiles/edit_cache.dir
-/Users/mman/Developer/enet/build/CMakeFiles/rebuild_cache.dir
-/Users/mman/Developer/enet/build/CMakeFiles/list_install_components.dir
-/Users/mman/Developer/enet/build/CMakeFiles/install.dir
-/Users/mman/Developer/enet/build/CMakeFiles/install/local.dir
-/Users/mman/Developer/enet/build/CMakeFiles/install/strip.dir

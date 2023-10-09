@@ -1,2 +1,0 @@
-/Applications/Xcode_15.1_beta_1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar qc libenet.a CMakeFiles/enet.dir/callbacks.c.o CMakeFiles/enet.dir/compress.c.o CMakeFiles/enet.dir/host.c.o CMakeFiles/enet.dir/list.c.o CMakeFiles/enet.dir/packet.c.o CMakeFiles/enet.dir/peer.c.o CMakeFiles/enet.dir/protocol.c.o CMakeFiles/enet.dir/unix.c.o CMakeFiles/enet.dir/win32.c.o
-/Applications/Xcode_15.1_beta_1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib libenet.a
