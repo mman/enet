@@ -1236,6 +1236,9 @@ enet_protocol_receive_incoming_commands (ENetHost * host, ENetEvent * event)
                                              1,
                                              & host -> myAddress);
 
+       if (receivedLength == -2)
+          continue;
+
        if (receivedLength < 0)
          return -1;
 
