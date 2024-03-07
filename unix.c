@@ -504,11 +504,12 @@ enet_socket_destroy (ENetSocket socket)
 }
 
 int
-enet_socket_send (ENetSocket socket,
+enet_socket_send (void * context, ENetSocket socket,
                   const ENetAddress * destinationAddress,
                   const ENetBuffer * buffers,
                   size_t bufferCount,
-                  const ENetAddress * sourceAddress)
+                  const ENetAddress * sourceAddress,
+                  void * connection)
 {
     struct msghdr msgHdr;
     struct sockaddr_in6 sin;
@@ -566,11 +567,12 @@ enet_socket_send (ENetSocket socket,
 }
 
 int
-enet_socket_receive (ENetSocket socket,
+enet_socket_receive (void * context, ENetSocket socket,
                      ENetAddress * sourceAddress,
                      ENetBuffer * buffers,
                      size_t bufferCount,
-                     ENetAddress * destinationAddress)
+                     ENetAddress * destinationAddress,
+                     void ** connection)
 {
     struct msghdr msgHdr;
     struct sockaddr_in6 sin;

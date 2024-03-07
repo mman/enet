@@ -10,13 +10,33 @@
     @{
 */
 
-/** Creates a host for communicating to peers.  
+ENetHostBIO ENET_SOCKET_BIO = {
+    .context = NULL,
+    .enet_socket_create = &enet_socket_create,
+    .enet_socket_bind = &enet_socket_bind,
+    .enet_socket_send = &enet_socket_send,
+    .enet_socket_receive = &enet_socket_receive,
+    .enet_socket_wait = &enet_socket_wait,
+    .enet_socket_destroy = &enet_socket_destroy,
+    .enet_socket_set_option = &enet_socket_set_option,
+    .enet_socket_get_option = &enet_socket_get_option,
+    .enet_socket_get_address = &enet_socket_get_address,
+};
+
+void
+enet_host_set_bio (ENetHost * host, ENetHostBIO bio)
+{
+    host -> bio = bio;
+}
+
+/** Creates a host for communicating to peers.
 
     @param address   the address at which other peers may connect to this host.  If NULL, then no peers may connect to the host.
     @param peerCount the maximum number of peers that should be allocated for the host.
     @param channelLimit the maximum number of channels allowed; if 0, then this is equivalent to ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT
     @param incomingBandwidth downstream bandwidth of the host in bytes/second; if 0, ENet will assume unlimited bandwidth.
     @param outgoingBandwidth upstream bandwidth of the host in bytes/second; if 0, ENet will assume unlimited bandwidth.
+    @param bio basic input/output routines enet will use to setup/destroy socket and to send/receive data.
 
     @returns the host on success and NULL on failure
 
@@ -26,7 +46,7 @@
     at any given time.
 */
 ENetHost *
-enet_host_create (const ENetAddress * address, size_t peerCount, size_t channelLimit, enet_uint32 incomingBandwidth, enet_uint32 outgoingBandwidth)
+enet_host_create (const ENetAddress * address, size_t peerCount, size_t channelLimit, enet_uint32 incomingBandwidth, enet_uint32 outgoingBandwidth, ENetHostBIO bio)
 {
     ENetHost * host;
     ENetPeer * currentPeer;
@@ -48,16 +68,18 @@ enet_host_create (const ENetAddress * address, size_t peerCount, size_t channelL
     }
     memset (host -> peers, 0, peerCount * sizeof (ENetPeer));
 
-    host -> socket = enet_socket_create (ENET_SOCKET_TYPE_DATAGRAM);
-	if( host -> socket > ENET_SOCKET_NULL ) {
-        enet_socket_set_option(host->socket, ENET_SOCKOPT_IPV6_V6ONLY, 0);
-        enet_socket_set_option(host->socket, ENET_SOCKOPT_IPV6_RECVPKTINFO, 1);
-        enet_socket_set_option(host->socket, ENET_SOCKOPT_REUSEADDR, 1);
+    host -> bio = bio;
+
+    host -> socket = (*host -> bio.enet_socket_create) (ENET_SOCKET_TYPE_DATAGRAM);
+	if (host -> socket > ENET_SOCKET_NULL) {
+        (*host -> bio.enet_socket_set_option)(host->socket, ENET_SOCKOPT_IPV6_V6ONLY, 0);
+        (*host -> bio.enet_socket_set_option)(host->socket, ENET_SOCKOPT_IPV6_RECVPKTINFO, 1);
+        (*host -> bio.enet_socket_set_option)(host->socket, ENET_SOCKOPT_REUSEADDR, 1);
     }
-    if (host -> socket == ENET_SOCKET_NULL || (address != NULL && enet_socket_bind (host -> socket, address) < 0))
+    if (host -> socket == ENET_SOCKET_NULL || (address != NULL && (*host -> bio.enet_socket_bind) (host -> socket, address) < 0))
     {
        if (host -> socket != ENET_SOCKET_NULL)
-         enet_socket_destroy (host -> socket);
+         (*host -> bio.enet_socket_destroy) (host -> socket);
 
        enet_free (host -> peers);
        enet_free (host);
@@ -65,12 +87,12 @@ enet_host_create (const ENetAddress * address, size_t peerCount, size_t channelL
        return NULL;
     }
 
-    enet_socket_set_option (host -> socket, ENET_SOCKOPT_NONBLOCK, 1);
-    enet_socket_set_option (host -> socket, ENET_SOCKOPT_RCVBUF, ENET_HOST_RECEIVE_BUFFER_SIZE);
-    enet_socket_set_option (host -> socket, ENET_SOCKOPT_SNDBUF, ENET_HOST_SEND_BUFFER_SIZE);
-    enet_socket_set_option (host -> socket, ENET_SOCKOPT_QOS, 1);
+    (*host -> bio.enet_socket_set_option) (host -> socket, ENET_SOCKOPT_NONBLOCK, 1);
+    (*host -> bio.enet_socket_set_option) (host -> socket, ENET_SOCKOPT_RCVBUF, ENET_HOST_RECEIVE_BUFFER_SIZE);
+    (*host -> bio.enet_socket_set_option) (host -> socket, ENET_SOCKOPT_SNDBUF, ENET_HOST_SEND_BUFFER_SIZE);
+    (*host -> bio.enet_socket_set_option) (host -> socket, ENET_SOCKOPT_QOS, 1);
 
-    if (address != NULL && enet_socket_get_address (host -> socket, & host -> address) < 0)   
+    if (address != NULL && (*host -> bio.enet_socket_get_address) (host -> socket, & host -> address) < 0)
       host -> address = * address;
 
     if (! channelLimit || channelLimit > ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT)
@@ -150,7 +172,7 @@ enet_host_destroy (ENetHost * host)
     if (host == NULL)
       return;
 
-    enet_socket_destroy (host -> socket);
+    (*host -> bio.enet_socket_destroy) (host -> socket);
 
     for (currentPeer = host -> peers;
          currentPeer < & host -> peers [host -> peerCount];

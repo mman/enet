@@ -278,9 +278,10 @@ typedef struct _ENetPeer
    enet_uint32   connectID;
    enet_uint8    outgoingSessionID;
    enet_uint8    incomingSessionID;
-   ENetAddress   myAddress;          /**< Internet address the peer is using to talk to me */
+   ENetAddress   localAddress;       /**< Internet address the peer is using to talk to me */
    ENetAddress   peerAddress;        /**< Internet address of the peer */
    void *        data;               /**< Application private data, may be freely modified */
+   void *        connection;         /**< Application private data, may be freely modified */
    ENetPeerState state;
    ENetChannel * channels;
    size_t        channelCount;       /**< Number of channels allocated for communication with peer */
@@ -353,7 +354,27 @@ typedef enet_uint32 (ENET_CALLBACK * ENetChecksumCallback) (const ENetBuffer * b
 
 /** Callback for intercepting received raw UDP packets. Should return 1 to intercept, 0 to ignore, or -1 to propagate an error. */
 typedef int (ENET_CALLBACK * ENetInterceptCallback) (struct _ENetHost * host, struct _ENetEvent * event);
- 
+
+/** An ENet structure to represent basic input/output routines for socket setup and sending/receiving data.
+ */
+typedef struct _ENetHistBIO
+{
+    void *      context;
+    ENetSocket (*enet_socket_create) (ENetSocketType);
+    int        (*enet_socket_bind) (ENetSocket, const ENetAddress *);
+    int        (*enet_socket_get_address) (ENetSocket, ENetAddress *);
+    int        (*enet_socket_send) (void *, ENetSocket, const ENetAddress *, const ENetBuffer *, size_t, const ENetAddress *, void *);
+    int        (*enet_socket_receive) (void *, ENetSocket, ENetAddress *, ENetBuffer *, size_t, ENetAddress *, void **);
+    int        (*enet_socket_wait) (ENetSocket, enet_uint32 *, enet_uint32);
+    int        (*enet_socket_set_option) (ENetSocket, ENetSocketOption, int);
+    int        (*enet_socket_get_option) (ENetSocket, ENetSocketOption, int *);
+    void       (*enet_socket_destroy) (ENetSocket);
+} ENetHostBIO;
+
+/** Default BSD socket based implementation of input/output routines for socket setup and sending/receiving data.
+ */
+extern ENetHostBIO ENET_SOCKET_BIO;
+
 /** An ENet host for communicating with peers.
   *
   * No fields should be modified unless otherwise stated.
@@ -363,6 +384,7 @@ typedef int (ENET_CALLBACK * ENetInterceptCallback) (struct _ENetHost * host, st
     @sa enet_host_connect()
     @sa enet_host_service()
     @sa enet_host_flush()
+    @sa enet_host_fetch()
     @sa enet_host_broadcast()
     @sa enet_host_compress()
     @sa enet_host_compress_with_range_coder()
@@ -395,7 +417,7 @@ typedef struct _ENetHost
    ENetChecksumCallback checksum;                    /**< callback the user can set to enable packet checksums for this host */
    ENetCompressor       compressor;
    enet_uint8           packetData [2][ENET_PROTOCOL_MAXIMUM_MTU];
-   ENetAddress          myAddress;
+   ENetAddress          localAddress;
    ENetAddress          peerAddress;
    enet_uint8 *         receivedData;
    size_t               receivedDataLength;
@@ -409,6 +431,8 @@ typedef struct _ENetHost
    size_t               duplicatePeers;              /**< optional number of allowed peers from duplicate IPs, defaults to ENET_PROTOCOL_MAXIMUM_PEER_ID */
    size_t               maximumPacketSize;           /**< the maximum allowable packet size that may be sent or received on a peer */
    size_t               maximumWaitingData;          /**< the maximum aggregate amount of buffer space a peer may use waiting for packets to be delivered */
+   ENetHostBIO          bio;
+   void *               connection;
 } ENetHost;
 
 /**
@@ -511,8 +535,8 @@ ENET_API int        enet_socket_get_address (ENetSocket, ENetAddress *);
 ENET_API int        enet_socket_listen (ENetSocket, int);
 ENET_API ENetSocket enet_socket_accept (ENetSocket, ENetAddress *);
 ENET_API int        enet_socket_connect (ENetSocket, const ENetAddress *);
-ENET_API int        enet_socket_send (ENetSocket, const ENetAddress *, const ENetBuffer *, size_t, const ENetAddress *);
-ENET_API int        enet_socket_receive (ENetSocket, ENetAddress *, ENetBuffer *, size_t, ENetAddress *);
+ENET_API int        enet_socket_send (void *, ENetSocket, const ENetAddress *, const ENetBuffer *, size_t, const ENetAddress *, void *);
+ENET_API int        enet_socket_receive (void *, ENetSocket, ENetAddress *, ENetBuffer *, size_t, ENetAddress *, void **);
 ENET_API int        enet_socket_wait (ENetSocket, enet_uint32 *, enet_uint32);
 ENET_API int        enet_socket_set_option (ENetSocket, ENetSocketOption, int);
 ENET_API int        enet_socket_get_option (ENetSocket, ENetSocketOption, int *);
@@ -573,12 +597,13 @@ ENET_API void         enet_packet_destroy (ENetPacket *);
 ENET_API int          enet_packet_resize  (ENetPacket *, size_t);
 ENET_API enet_uint32  enet_crc32 (const ENetBuffer *, size_t);
                 
-ENET_API ENetHost * enet_host_create (const ENetAddress *, size_t, size_t, enet_uint32, enet_uint32);
+ENET_API ENetHost * enet_host_create (const ENetAddress *, size_t, size_t, enet_uint32, enet_uint32, ENetHostBIO);
 ENET_API void       enet_host_destroy (ENetHost *);
 ENET_API ENetPeer * enet_host_connect (ENetHost *, const ENetAddress *, size_t, enet_uint32, enet_uint32);
 ENET_API int        enet_host_check_events (ENetHost *, ENetEvent *);
 ENET_API int        enet_host_service (ENetHost *, ENetEvent *, enet_uint32);
 ENET_API void       enet_host_flush (ENetHost *);
+ENET_API void       enet_host_fetch (ENetHost *);
 ENET_API void       enet_host_broadcast (ENetHost *, enet_uint8, ENetPacket *);
 ENET_API void       enet_host_compress (ENetHost *, const ENetCompressor *);
 ENET_API int        enet_host_compress_with_range_coder (ENetHost * host);
@@ -587,6 +612,7 @@ ENET_API void       enet_host_bandwidth_limit (ENetHost *, enet_uint32, enet_uin
 extern   void       enet_host_bandwidth_throttle (ENetHost *);
 extern  enet_uint32 enet_host_random_seed (void);
 extern  enet_uint32 enet_host_random (ENetHost *);
+ENET_API void       enet_host_set_bio (ENetHost *, ENetHostBIO);
 
 ENET_API int                 enet_peer_send (ENetPeer *, enet_uint8, ENetPacket *);
 ENET_API ENetPacket *        enet_peer_receive (ENetPeer *, enet_uint8 * channelID);

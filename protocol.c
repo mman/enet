@@ -345,7 +345,8 @@ enet_protocol_handle_connect (ENetHost * host, ENetProtocolHeader * header, ENet
     peer -> state = ENET_PEER_STATE_ACKNOWLEDGING_CONNECT;
     peer -> connectID = command -> connect.connectID;
     peer -> peerAddress = host -> peerAddress;
-    peer -> myAddress = host -> myAddress;
+    peer -> localAddress = host -> localAddress;
+    peer -> connection = host -> connection;
     peer -> mtu = host -> mtu;
     peer -> outgoingPeerID = ENET_NET_TO_HOST_16 (command -> connect.outgoingPeerID);
     peer -> incomingBandwidth = ENET_NET_TO_HOST_32 (command -> connect.incomingBandwidth);
@@ -1092,7 +1093,7 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
     {
        peer -> peerAddress.host = host -> peerAddress.host;
        peer -> peerAddress.port = host -> peerAddress.port;
-       peer -> myAddress = host -> myAddress;
+       peer -> localAddress = host -> localAddress;
        peer -> incomingDataTotal += host -> receivedDataLength;
     }
     
@@ -1242,11 +1243,13 @@ enet_protocol_receive_incoming_commands (ENetHost * host, ENetEvent * event)
        buffer.data = host -> packetData [0];
        buffer.dataLength = sizeof (host -> packetData [0]);
 
-       receivedLength = enet_socket_receive (host -> socket,
-                                             & host -> peerAddress,
-                                             & buffer,
-                                             1,
-                                             & host -> myAddress);
+       receivedLength = (*host -> bio.enet_socket_receive) (host -> bio.context,
+                                                            host -> socket,
+                                                            & host -> peerAddress,
+                                                            & buffer,
+                                                            1,
+                                                            & host -> localAddress,
+                                                            &host -> connection);
 
        if (receivedLength == -2)
           continue;
@@ -1731,10 +1734,16 @@ enet_protocol_send_outgoing_commands (ENetHost * host, ENetEvent * event, int ch
         if (currentPeer -> state == ENET_PEER_STATE_CONNECTING && currentPeer -> packetsLost == 2) {
             // Disable QoS tagging if we don't get a response to 2 connection requests in a row.
             // Some networks drop QoS tagged packets, so let's try without it.
-            enet_socket_set_option (host -> socket, ENET_SOCKOPT_QOS, 0);
+            (*host -> bio.enet_socket_set_option) (host -> socket, ENET_SOCKOPT_QOS, 0);
         }
 
-        sentLength = enet_socket_send (host -> socket, & currentPeer -> peerAddress, host -> buffers, host -> bufferCount, & currentPeer -> myAddress);
+        sentLength = (*host -> bio.enet_socket_send) (host -> bio.context,
+                                                      host -> socket,
+                                                      & currentPeer -> peerAddress,
+                                                      host -> buffers,
+                                                      host -> bufferCount,
+                                                      & currentPeer -> localAddress,
+                                                      currentPeer -> connection);
 
         enet_protocol_remove_sent_unreliable_commands (currentPeer, & sentUnreliableCommands);
 
@@ -1764,6 +1773,20 @@ enet_host_flush (ENetHost * host)
     host -> serviceTime = enet_time_get ();
 
     enet_protocol_send_outgoing_commands (host, NULL, 0);
+}
+
+/** Receives any available packets from networking stack and queues events to be delivered to the host.
+
+    @param host   host to fetch
+    @remarks this function need only be used in circumstances where one wishes to receive and parse packets available in networking stack earlier than in a call to enet_host_service().
+    @ingroup host
+*/
+void
+enet_host_fetch (ENetHost * host)
+{
+    host -> serviceTime = enet_time_get ();
+
+    enet_protocol_receive_incoming_commands (host, NULL);
 }
 
 /** Checks for any queued events on the host and dispatches one if available.
@@ -1915,7 +1938,7 @@ enet_host_service (ENetHost * host, ENetEvent * event, enet_uint32 timeout)
 
           waitCondition = ENET_SOCKET_WAIT_RECEIVE | ENET_SOCKET_WAIT_INTERRUPT;
 
-          if (enet_socket_wait (host -> socket, & waitCondition, ENET_TIME_DIFFERENCE (timeout, host -> serviceTime)) != 0)
+          if ((*host -> bio.enet_socket_wait) (host -> socket, & waitCondition, ENET_TIME_DIFFERENCE (timeout, host -> serviceTime)) != 0)
             return -1;
        }
        while (waitCondition & ENET_SOCKET_WAIT_INTERRUPT);
