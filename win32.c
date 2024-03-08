@@ -9,6 +9,7 @@
 #include <windows.h>
 #include <mmsystem.h>
 #include <ws2ipdef.h>
+#include <ws2tcpip.h>
 
 static enet_uint32 timeBase = 0;
 
@@ -364,10 +365,12 @@ enet_socket_destroy (ENetSocket socket)
 }
 
 int
-enet_socket_send (ENetSocket socket,
+enet_socket_send (void * context, ENetSocket socket,
                   const ENetAddress * address,
                   const ENetBuffer * buffers,
-                  size_t bufferCount)
+                  size_t bufferCount,
+                  const ENetAddress * sourceAddress,
+                  void * connection)
 {
     struct sockaddr_in6 sin;
     DWORD sentLength = 0;
@@ -401,10 +404,12 @@ enet_socket_send (ENetSocket socket,
 }
 
 int
-enet_socket_receive (ENetSocket socket,
+enet_socket_receive (void * context, ENetSocket socket,
                      ENetAddress * address,
                      ENetBuffer * buffers,
-                     size_t bufferCount)
+                     size_t bufferCount,
+                     const ENetAddress * destinationAddress,
+                     void ** connection)
 {
     INT sinLength = sizeof (struct sockaddr_in6);
     DWORD flags = 0,
