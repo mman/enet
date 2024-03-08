@@ -55,6 +55,8 @@ if(HAS_SOCKLEN_T)
     add_definitions(-DHAS_SOCKLEN_T=1)
 endif()
 
+add_definitions(-D_GNU_SOURCE=1)
+
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 set(INCLUDE_FILES_PREFIX include/enet)
