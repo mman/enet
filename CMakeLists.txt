@@ -75,6 +75,7 @@ set(INCLUDE_FILES
     ${INCLUDE_FILES_PREFIX}/types.h
     ${INCLUDE_FILES_PREFIX}/unix.h
     ${INCLUDE_FILES_PREFIX}/../../enet_utility.h
+    ${INCLUDE_FILES_PREFIX}/win32.h
 )
 
 set(SOURCE_FILES
