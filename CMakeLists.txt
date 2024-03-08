@@ -55,7 +55,13 @@ if(HAS_SOCKLEN_T)
     add_definitions(-DHAS_SOCKLEN_T=1)
 endif()
 
-add_definitions(-D_GNU_SOURCE=1)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    add_definitions(-D_GNU_SOURCE=1)
+endif()
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    add_definitions(-D__APPLE_USE_RFC_3542=1)
+endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
