@@ -359,12 +359,11 @@ typedef int (ENET_CALLBACK * ENetInterceptCallback) (struct _ENetHost * host, st
  */
 typedef struct _ENetHistBIO
 {
-    void *      context;
     ENetSocket (*enet_socket_create) (ENetSocketType);
     int        (*enet_socket_bind) (ENetSocket, const ENetAddress *);
     int        (*enet_socket_get_address) (ENetSocket, ENetAddress *);
-    int        (*enet_socket_send) (void *, ENetSocket, const ENetAddress *, const ENetBuffer *, size_t, const ENetAddress *, void *);
-    int        (*enet_socket_receive) (void *, ENetSocket, ENetAddress *, ENetBuffer *, size_t, ENetAddress *, void **);
+    int        (*enet_socket_send) (/*ENetPeer*/ void *, ENetSocket, const ENetAddress *, const ENetBuffer *, size_t, const ENetAddress *);
+    int        (*enet_socket_receive) (/*ENetHost*/ void *, ENetSocket, ENetAddress *, ENetBuffer *, size_t, ENetAddress *);
     int        (*enet_socket_wait) (ENetSocket, enet_uint32 *, enet_uint32);
     int        (*enet_socket_set_option) (ENetSocket, ENetSocketOption, int);
     int        (*enet_socket_get_option) (ENetSocket, ENetSocketOption, int *);
@@ -432,7 +431,8 @@ typedef struct _ENetHost
    size_t               maximumPacketSize;           /**< the maximum allowable packet size that may be sent or received on a peer */
    size_t               maximumWaitingData;          /**< the maximum aggregate amount of buffer space a peer may use waiting for packets to be delivered */
    ENetHostBIO          bio;
-   void *               connection;
+   void *               data;                        /**< Application private data, may be freely modified */
+   void *               connection;                  /**< Application private data, may be freely modified */
 } ENetHost;
 
 /**
@@ -535,8 +535,8 @@ ENET_API int        enet_socket_get_address (ENetSocket, ENetAddress *);
 ENET_API int        enet_socket_listen (ENetSocket, int);
 ENET_API ENetSocket enet_socket_accept (ENetSocket, ENetAddress *);
 ENET_API int        enet_socket_connect (ENetSocket, const ENetAddress *);
-ENET_API int        enet_socket_send (void *, ENetSocket, const ENetAddress *, const ENetBuffer *, size_t, const ENetAddress *, void *);
-ENET_API int        enet_socket_receive (void *, ENetSocket, ENetAddress *, ENetBuffer *, size_t, ENetAddress *, void **);
+ENET_API int        enet_socket_send (/*ENetPeer*/ void *, ENetSocket, const ENetAddress *, const ENetBuffer *, size_t, const ENetAddress *);
+ENET_API int        enet_socket_receive (/*ENetHost*/ void *, ENetSocket, ENetAddress *, ENetBuffer *, size_t, ENetAddress *);
 ENET_API int        enet_socket_wait (ENetSocket, enet_uint32 *, enet_uint32);
 ENET_API int        enet_socket_set_option (ENetSocket, ENetSocketOption, int);
 ENET_API int        enet_socket_get_option (ENetSocket, ENetSocketOption, int *);

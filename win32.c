@@ -365,12 +365,11 @@ enet_socket_destroy (ENetSocket socket)
 }
 
 int
-enet_socket_send (void * context, ENetSocket socket,
+enet_socket_send (void * enetPeer, ENetSocket socket,
                   const ENetAddress * address,
                   const ENetBuffer * buffers,
                   size_t bufferCount,
-                  const ENetAddress * sourceAddress,
-                  void * connection)
+                  const ENetAddress * sourceAddress)
 {
     struct sockaddr_in6 sin;
     DWORD sentLength = 0;
@@ -404,12 +403,12 @@ enet_socket_send (void * context, ENetSocket socket,
 }
 
 int
-enet_socket_receive (void * context, ENetSocket socket,
+enet_socket_receive (void * host,
+                     ENetSocket socket,
                      ENetAddress * address,
                      ENetBuffer * buffers,
                      size_t bufferCount,
-                     const ENetAddress * destinationAddress,
-                     void ** connection)
+                     const ENetAddress * destinationAddress)
 {
     INT sinLength = sizeof (struct sockaddr_in6);
     DWORD flags = 0,

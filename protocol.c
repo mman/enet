@@ -1127,6 +1127,15 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
          
        command -> header.reliableSequenceNumber = ENET_NET_TO_HOST_16 (command -> header.reliableSequenceNumber);
 
+#if ENET_DEBUG
+            printf("<<< host: %p, port %d, peer: %p, state: %d, channel: %d, command: 0x%x, .header.reliableSequenceNumber: %d\n",
+                   host, host -> address.port,
+                   peer, peer != NULL ? peer->state : -1,
+                   command -> header.channelID,
+                   command -> header.command,
+                   command -> header.reliableSequenceNumber);
+#endif
+
        switch (commandNumber)
        {
        case ENET_PROTOCOL_COMMAND_ACKNOWLEDGE:
@@ -1246,13 +1255,12 @@ enet_protocol_receive_incoming_commands (ENetHost * host, ENetEvent * event)
        buffer.data = host -> packetData [0];
        buffer.dataLength = sizeof (host -> packetData [0]);
 
-       receivedLength = (*host -> bio.enet_socket_receive) (host -> bio.context,
+       receivedLength = (*host -> bio.enet_socket_receive) (host,
                                                             host -> socket,
                                                             & host -> peerAddress,
                                                             & buffer,
                                                             1,
-                                                            & host -> localAddress,
-                                                            &host -> connection);
+                                                            & host -> localAddress);
 
        if (receivedLength == -2)
           continue;
@@ -1743,13 +1751,25 @@ enet_protocol_send_outgoing_commands (ENetHost * host, ENetEvent * event, int ch
             (*host -> bio.enet_socket_set_option) (host -> socket, ENET_SOCKOPT_QOS, 0);
         }
 
-        sentLength = (*host -> bio.enet_socket_send) (host -> bio.context,
+#if ENET_DEBUG
+        printf(">>> host: %p, port: %d START %d commands\n", host, host -> address.port, host -> commandCount);
+        for (int i = 0; i < host -> commandCount; i ++) {
+            printf(">>> host: %p, port: %d, peer: %p, state: %d, channel: %d, command: 0x%x, .header.reliableSequenceNumber: %d\n",
+                   host, host -> address.port,
+                   currentPeer, currentPeer->state,
+                   host -> commands[i].header.channelID,
+                   host -> commands[i].header.command,
+                   host -> commands[i].header.reliableSequenceNumber);
+        }
+        printf(">>> host: %p, port: %d END\n", host, host -> address.port);
+#endif
+
+        sentLength = (*host -> bio.enet_socket_send) (currentPeer,
                                                       host -> socket,
                                                       & currentPeer -> peerAddress,
                                                       host -> buffers,
                                                       host -> bufferCount,
-                                                      & currentPeer -> localAddress,
-                                                      currentPeer -> connection);
+                                                      & currentPeer -> localAddress);
 
         enet_protocol_remove_sent_unreliable_commands (currentPeer, & sentUnreliableCommands);
 

@@ -11,7 +11,6 @@
 */
 
 ENetHostBIO ENET_SOCKET_BIO = {
-    .context = NULL,
     .enet_socket_create = &enet_socket_create,
     .enet_socket_bind = &enet_socket_bind,
     .enet_socket_send = &enet_socket_send,
