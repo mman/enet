@@ -1,0 +1,5 @@
+module enet {
+    header "enet/enet.h"
+    link "enet"
+    export *
+}
