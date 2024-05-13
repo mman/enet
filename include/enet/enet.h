@@ -372,7 +372,7 @@ typedef struct _ENetHistBIO
 
 /** Default BSD socket based implementation of input/output routines for socket setup and sending/receiving data.
  */
-extern ENetHostBIO ENET_SOCKET_BIO;
+extern const ENetHostBIO ENET_SOCKET_BIO;
 
 /** An ENet host for communicating with peers.
   *
@@ -612,7 +612,7 @@ ENET_API void       enet_host_bandwidth_limit (ENetHost *, enet_uint32, enet_uin
 extern   void       enet_host_bandwidth_throttle (ENetHost *);
 extern  enet_uint32 enet_host_random_seed (void);
 extern  enet_uint32 enet_host_random (ENetHost *);
-ENET_API void       enet_host_set_bio (ENetHost *, ENetHostBIO);
+ENET_API void       enet_host_set_bio (ENetHost *, const ENetHostBIO);
 
 ENET_API int                 enet_peer_send (ENetPeer *, enet_uint8, ENetPacket *);
 ENET_API ENetPacket *        enet_peer_receive (ENetPeer *, enet_uint8 * channelID);

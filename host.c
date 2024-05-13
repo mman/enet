@@ -10,7 +10,7 @@
     @{
 */
 
-ENetHostBIO ENET_SOCKET_BIO = {
+const ENetHostBIO ENET_SOCKET_BIO = {
     .enet_socket_create = &enet_socket_create,
     .enet_socket_bind = &enet_socket_bind,
     .enet_socket_send = &enet_socket_send,
@@ -23,7 +23,7 @@ ENetHostBIO ENET_SOCKET_BIO = {
 };
 
 void
-enet_host_set_bio (ENetHost * host, ENetHostBIO bio)
+enet_host_set_bio (ENetHost * host, const ENetHostBIO bio)
 {
     host -> bio = bio;
 }
