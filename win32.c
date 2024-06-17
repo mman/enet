@@ -1,4 +1,4 @@
-/** 
+/**
  @file  win32.c
  @brief ENet Win32 system specific functions
 */
@@ -8,8 +8,8 @@
 #include "enet/enet.h"
 #include <windows.h>
 #include <mmsystem.h>
-#include <ws2ipdef.h>
 #include <ws2tcpip.h>
+#include <ws2ipdef.h>
 
 static enet_uint32 timeBase = 0;
 
@@ -18,7 +18,7 @@ enet_initialize (void)
 {
     WORD versionRequested = MAKEWORD (1, 1);
     WSADATA wsaData;
-   
+
     if (WSAStartup (versionRequested, & wsaData))
        return -1;
 
@@ -26,7 +26,7 @@ enet_initialize (void)
         HIBYTE (wsaData.wVersion) != 1)
     {
        WSACleanup ();
-       
+
        return -1;
     }
 
@@ -137,7 +137,7 @@ enet_address_get_host_ip (const ENetAddress * address, char * name, size_t nameL
         if (addrLen >= nameLength)
           return -1;
         memcpy (name, addr, addrLen + 1);
-    } 
+    }
     else
 #endif
         return -1;
@@ -335,8 +335,8 @@ enet_socket_accept (ENetSocket socket, ENetAddress * address)
     struct sockaddr_in6 sin;
     int sinLength = sizeof (struct sockaddr_in6);
 
-    result = accept (socket, 
-                     address != NULL ? (struct sockaddr *) & sin : NULL, 
+    result = accept (socket,
+                     address != NULL ? (struct sockaddr *) & sin : NULL,
                      address != NULL ? & sinLength : NULL);
 
     if (result == INVALID_SOCKET)
@@ -383,7 +383,7 @@ enet_socket_send (void * enetPeer, ENetSocket socket,
         sin.sin6_addr = address -> host;
     }
 
-    if (WSASendTo (socket, 
+    if (WSASendTo (socket,
                    (LPWSABUF) buffers,
                    (DWORD) bufferCount,
                    & sentLength,
@@ -430,11 +430,12 @@ enet_socket_receive (void * host,
        case WSAEWOULDBLOCK:
        case WSAECONNRESET:
           return 0;
+       case WSAEINTR:
        case WSAEMSGSIZE:
           return -2;
+       default:
+          return -1;
        }
-
-       return -1;
     }
 
     if (flags & MSG_PARTIAL)
@@ -466,10 +467,10 @@ enet_socket_wait (ENetSocket socket, enet_uint32 * condition, enet_uint32 timeou
     fd_set readSet, writeSet;
     struct timeval timeVal;
     int selectCount;
-    
+
     timeVal.tv_sec = timeout / 1000;
     timeVal.tv_usec = (timeout % 1000) * 1000;
-    
+
     FD_ZERO (& readSet);
     FD_ZERO (& writeSet);
 
@@ -491,12 +492,12 @@ enet_socket_wait (ENetSocket socket, enet_uint32 * condition, enet_uint32 timeou
 
     if (FD_ISSET (socket, & writeSet))
       * condition |= ENET_SOCKET_WAIT_SEND;
-    
+
     if (FD_ISSET (socket, & readSet))
       * condition |= ENET_SOCKET_WAIT_RECEIVE;
 
     return 0;
-} 
+}
 
 #endif
 
