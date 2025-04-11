@@ -70,10 +70,9 @@ enet_host_create (const ENetAddress * address, size_t peerCount, size_t channelL
     host -> bio = bio;
 
     host -> socket = (*host -> bio.enet_socket_create) (ENET_SOCKET_TYPE_DATAGRAM);
-	if (host -> socket > ENET_SOCKET_NULL) {
+    if (host -> socket > ENET_SOCKET_NULL) {
         (*host -> bio.enet_socket_set_option)(host->socket, ENET_SOCKOPT_IPV6_V6ONLY, 0);
         (*host -> bio.enet_socket_set_option)(host->socket, ENET_SOCKOPT_IPV6_RECVPKTINFO, 1);
-        (*host -> bio.enet_socket_set_option)(host->socket, ENET_SOCKOPT_REUSEADDR, 1);
     }
     if (host -> socket == ENET_SOCKET_NULL || (address != NULL && (*host -> bio.enet_socket_bind) (host -> socket, address) < 0))
     {
