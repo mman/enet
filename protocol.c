@@ -1525,7 +1525,7 @@ enet_protocol_check_outgoing_commands (ENetHost * host, ENetPeer * peer, ENetLis
 
           if (outgoingCommand -> roundTripTimeout == 0)
           {
-            outgoingCommand -> roundTripTimeout = peer -> roundTripTime + 4 * peer -> roundTripTimeVariance;
+            outgoingCommand -> roundTripTimeout = peer -> roundTripTime + 4 * ENET_MAX (peer -> roundTripTime, ENET_MAX (1, peer -> roundTripTimeVariance));
           }
 
           if (enet_list_empty (& peer -> sentReliableCommands))
