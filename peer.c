@@ -121,6 +121,8 @@ enet_peer_send (ENetPeer * peer, enet_uint8 channelID, ENetPacket * packet)
    if (peer -> host -> checksum != NULL)
      fragmentLength -= sizeof(enet_uint32);
 
+   packet -> queueTime = peer -> host -> serviceTime;
+
    if (packet -> dataLength > fragmentLength)
    {
       enet_uint32 fragmentCount = (enet_uint32)((packet -> dataLength + fragmentLength - 1) / fragmentLength),
@@ -266,6 +268,8 @@ enet_peer_reset_outgoing_commands (ENetPeer * peer, ENetList * queue)
 
        if (outgoingCommand -> packet != NULL)
        {
+          outgoingCommand -> packet -> totalSendAttempts += outgoingCommand -> sendAttempts;
+
           -- outgoingCommand -> packet -> referenceCount;
 
           if (outgoingCommand -> packet -> referenceCount == 0)
@@ -426,6 +430,7 @@ enet_peer_reset (ENetPeer * peer)
     peer -> roundTripTime = ENET_PEER_DEFAULT_ROUND_TRIP_TIME;
     peer -> roundTripTimeVariance = 0;
     peer -> mtu = peer -> host -> mtu;
+    peer -> reliableDataInQueue = 0;
     peer -> reliableDataInTransit = 0;
     peer -> outgoingReliableSequenceNumber = 0;
     peer -> windowSize = ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE;
@@ -707,7 +712,10 @@ enet_peer_setup_outgoing_command (ENetPeer * peer, ENetOutgoingCommand * outgoin
 
     if ((outgoingCommand -> command.header.command & ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE) != 0 &&
         outgoingCommand -> packet != NULL)
+    {
+      peer -> reliableDataInQueue += outgoingCommand -> fragmentLength;
       enet_list_insert (enet_list_end (& peer -> outgoingSendReliableCommands), outgoingCommand);
+    }
     else
       enet_list_insert (enet_list_end (& peer -> outgoingCommands), outgoingCommand);
 }

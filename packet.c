@@ -46,6 +46,10 @@ enet_packet_create (const void * data, size_t dataLength, enet_uint32 flags)
     packet -> dataLength = dataLength;
     packet -> freeCallback = NULL;
     packet -> userData = NULL;
+    packet -> queueTime = 0;
+    packet -> firstSendTime = 0;
+    packet -> ackTime = 0;
+    packet -> totalSendAttempts = 0;
 
     return packet;
 }

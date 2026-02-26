@@ -155,6 +155,10 @@ typedef struct _ENetPacket
    size_t                   dataLength;      /**< length of data */
    ENetPacketFreeCallback   freeCallback;    /**< function to be called when the packet is no longer in use */
    void *                   userData;        /**< application private data, may be freely modified */
+   enet_uint32              queueTime;       /**< serviceTime when the packet was queued for sending */
+   enet_uint32              firstSendTime;   /**< serviceTime when the first delivery attempt was made (0 if never sent) */
+   enet_uint32              ackTime;         /**< serviceTime when the last fragment was acknowledged (0 if not fully acked) */
+   enet_uint32              totalSendAttempts; /**< total send attempts across all fragments (includes retransmissions) */
 } ENetPacket;
 
 typedef struct _ENetAcknowledgement
@@ -313,6 +317,7 @@ typedef struct _ENetPeer
    enet_uint32   roundTripTimeVariance;
    enet_uint32   mtu;
    enet_uint32   windowSize;
+   enet_uint32   reliableDataInQueue;        /**< total bytes of reliable data queued but not yet sent on the wire */
    enet_uint32   reliableDataInTransit;
    enet_uint16   outgoingReliableSequenceNumber;
    ENetList      acknowledgements;

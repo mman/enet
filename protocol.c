@@ -179,6 +179,8 @@ enet_protocol_remove_sent_unreliable_commands (ENetPeer * peer, ENetList * sentU
 
         if (outgoingCommand -> packet != NULL)
         {
+           outgoingCommand -> packet -> totalSendAttempts += outgoingCommand -> sendAttempts;
+
            -- outgoingCommand -> packet -> referenceCount;
 
            if (outgoingCommand -> packet -> referenceCount == 0)
@@ -273,11 +275,16 @@ enet_protocol_remove_sent_reliable_command (ENetPeer * peer, enet_uint16 reliabl
     {
        if (wasSent)
          peer -> reliableDataInTransit -= outgoingCommand -> fragmentLength;
+       else
+         peer -> reliableDataInQueue -= outgoingCommand -> fragmentLength;
+
+       outgoingCommand -> packet -> totalSendAttempts += outgoingCommand -> sendAttempts;
 
        -- outgoingCommand -> packet -> referenceCount;
 
        if (outgoingCommand -> packet -> referenceCount == 0)
        {
+          outgoingCommand -> packet -> ackTime = peer -> host -> serviceTime;
           outgoingCommand -> packet -> flags |= ENET_PACKET_FLAG_SENT;
 
           enet_packet_destroy (outgoingCommand -> packet);
@@ -1408,6 +1415,7 @@ enet_protocol_check_timeouts (ENetHost * host, ENetPeer * peer, ENetEvent * even
 
        if (outgoingCommand -> packet != NULL)
        {
+         peer -> reliableDataInQueue += outgoingCommand -> fragmentLength;
          peer -> reliableDataInTransit -= outgoingCommand -> fragmentLength;
 
          enet_list_insert (insertSendReliablePosition, enet_list_remove (& outgoingCommand -> outgoingCommandList));
@@ -1523,6 +1531,11 @@ enet_protocol_check_outgoing_commands (ENetHost * host, ENetPeer * peer, ENetLis
 
           ++ outgoingCommand -> sendAttempts;
 
+          if (outgoingCommand -> packet != NULL &&
+              outgoingCommand -> sendAttempts == 1 &&
+              outgoingCommand -> packet -> firstSendTime == 0)
+            outgoingCommand -> packet -> firstSendTime = host -> serviceTime;
+
           if (outgoingCommand -> roundTripTimeout == 0)
           {
             outgoingCommand -> roundTripTimeout = peer -> roundTripTime + 4 * ENET_MAX (peer -> roundTripTime, ENET_MAX (1, peer -> roundTripTimeVariance));
@@ -1538,6 +1551,7 @@ enet_protocol_check_outgoing_commands (ENetHost * host, ENetPeer * peer, ENetLis
 
           host -> headerFlags |= ENET_PROTOCOL_HEADER_FLAG_SENT_TIME;
 
+          peer -> reliableDataInQueue -= outgoingCommand -> fragmentLength;
           peer -> reliableDataInTransit += outgoingCommand -> fragmentLength;
        }
        else
@@ -1579,7 +1593,12 @@ enet_protocol_check_outgoing_commands (ENetHost * host, ENetPeer * peer, ENetLis
           enet_list_remove (& outgoingCommand -> outgoingCommandList);
 
           if (outgoingCommand -> packet != NULL)
+          {
+            if (outgoingCommand -> packet -> firstSendTime == 0)
+              outgoingCommand -> packet -> firstSendTime = host -> serviceTime;
+
             enet_list_insert (enet_list_end (sentUnreliableCommands), outgoingCommand);
+          }
        }
 
        buffer -> data = command;
