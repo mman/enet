@@ -159,6 +159,7 @@ typedef struct _ENetPacket
    enet_uint32              firstSendTime;   /**< serviceTime when the first delivery attempt was made (0 if never sent) */
    enet_uint32              ackTime;         /**< serviceTime when the last fragment was acknowledged (0 if not fully acked) */
    enet_uint32              totalSendAttempts; /**< total send attempts across all fragments (includes retransmissions) */
+   enet_uint32              fragmentCount;     /**< number of fragments this packet was split into (1 if not fragmented) */
 } ENetPacket;
 
 typedef struct _ENetAcknowledgement

@@ -50,6 +50,7 @@ enet_packet_create (const void * data, size_t dataLength, enet_uint32 flags)
     packet -> firstSendTime = 0;
     packet -> ackTime = 0;
     packet -> totalSendAttempts = 0;
+    packet -> fragmentCount = 0;
 
     return packet;
 }

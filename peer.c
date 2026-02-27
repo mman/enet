@@ -187,6 +187,7 @@ enet_peer_send (ENetPeer * peer, enet_uint8 channelID, ENetPacket * packet)
          enet_list_insert (enet_list_end (& fragments), fragment);
       }
 
+      packet -> fragmentCount = fragmentCount;
       packet -> referenceCount += fragmentNumber;
 
       while (! enet_list_empty (& fragments))
@@ -217,6 +218,8 @@ enet_peer_send (ENetPeer * peer, enet_uint8 channelID, ENetPacket * packet)
       command.header.command = ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE;
       command.sendUnreliable.dataLength = ENET_HOST_TO_NET_16 (packet -> dataLength);
    }
+
+   packet -> fragmentCount = 1;
 
    if (enet_peer_queue_outgoing_command (peer, & command, packet, 0, packet -> dataLength) == NULL)
      return -1;
