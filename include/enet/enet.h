@@ -26,6 +26,12 @@
 #define ENET_SENT_RELIABLE_COMMAND_KEY(channelID, reliableSequenceNumber) \
     (((enet_uint32)(channelID) << 16) | (enet_uint32)(reliableSequenceNumber))
 
+#define ENET_INCOMING_RELIABLE_COMMAND_KEY(reliableSequenceNumber) \
+    ((enet_uint32)(reliableSequenceNumber))
+
+#define ENET_INCOMING_UNRELIABLE_COMMAND_KEY(reliableSequenceNumber, unreliableSequenceNumber) \
+    (((enet_uint32)(reliableSequenceNumber) << 16) | (enet_uint32)(unreliableSequenceNumber))
+
 #define ENET_VERSION_MAJOR 1
 #define ENET_VERSION_MINOR 3
 #define ENET_VERSION_PATCH 18
@@ -204,6 +210,8 @@ typedef struct _ENetIncomingCommand
    enet_uint32      fragmentsRemaining;
    enet_uint32 *    fragments;
    ENetPacket *     packet;
+   enet_uint32      incomingCommandKey;  /**< packed key for hash lookup (reliable-only or composite) */
+   UT_hash_handle   incomingCommandHash; /**< uthash handle for incoming command hash table */
 } ENetIncomingCommand;
 
 typedef enum _ENetPeerState
@@ -264,7 +272,9 @@ typedef struct _ENetChannel
    enet_uint16  incomingReliableSequenceNumber;
    enet_uint16  incomingUnreliableSequenceNumber;
    ENetList     incomingReliableCommands;
+   struct _ENetIncomingCommand * incomingReliableCommandsHashTable;   /**< uthash index by reliableSequenceNumber */
    ENetList     incomingUnreliableCommands;
+   struct _ENetIncomingCommand * incomingUnreliableCommandsHashTable; /**< uthash index by (reliableSeqNum << 16 | unreliableSeqNum) */
 } ENetChannel;
 
 typedef enum _ENetPeerFlag

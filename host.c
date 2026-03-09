@@ -265,7 +265,9 @@ enet_host_connect (ENetHost * host, const ENetAddress * address, size_t channelC
         channel -> incomingUnreliableSequenceNumber = 0;
 
         enet_list_clear (& channel -> incomingReliableCommands);
+        channel -> incomingReliableCommandsHashTable = NULL;
         enet_list_clear (& channel -> incomingUnreliableCommands);
+        channel -> incomingUnreliableCommandsHashTable = NULL;
 
         channel -> usedReliableWindows = 0;
         memset (channel -> reliableWindows, 0, sizeof (channel -> reliableWindows));

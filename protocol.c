@@ -392,7 +392,9 @@ enet_protocol_handle_connect (ENetHost * host, ENetProtocolHeader * header, ENet
         channel -> incomingUnreliableSequenceNumber = 0;
 
         enet_list_clear (& channel -> incomingReliableCommands);
+        channel -> incomingReliableCommandsHashTable = NULL;
         enet_list_clear (& channel -> incomingUnreliableCommands);
+        channel -> incomingUnreliableCommandsHashTable = NULL;
 
         channel -> usedReliableWindows = 0;
         memset (channel -> reliableWindows, 0, sizeof (channel -> reliableWindows));
@@ -604,33 +606,18 @@ enet_protocol_handle_send_fragment (ENetHost * host, ENetPeer * peer, const ENet
         fragmentLength > totalLength - fragmentOffset)
       return -1;
 
-    for (currentCommand = enet_list_previous (enet_list_end (& channel -> incomingReliableCommands));
-         currentCommand != enet_list_end (& channel -> incomingReliableCommands);
-         currentCommand = enet_list_previous (currentCommand))
     {
-       ENetIncomingCommand * incomingCommand = (ENetIncomingCommand *) currentCommand;
-
-       if (startSequenceNumber >= channel -> incomingReliableSequenceNumber)
+       ENetIncomingCommand * existingCommand = NULL;
+       enet_uint32 key = ENET_INCOMING_RELIABLE_COMMAND_KEY (startSequenceNumber);
+       HASH_FIND (incomingCommandHash, channel -> incomingReliableCommandsHashTable, & key, sizeof (enet_uint32), existingCommand);
+       if (existingCommand != NULL)
        {
-          if (incomingCommand -> reliableSequenceNumber < channel -> incomingReliableSequenceNumber)
-            continue;
-       }
-       else
-       if (incomingCommand -> reliableSequenceNumber >= channel -> incomingReliableSequenceNumber)
-         break;
-
-       if (incomingCommand -> reliableSequenceNumber <= startSequenceNumber)
-       {
-          if (incomingCommand -> reliableSequenceNumber < startSequenceNumber)
-            break;
-
-          if ((incomingCommand -> command.header.command & ENET_PROTOCOL_COMMAND_MASK) != ENET_PROTOCOL_COMMAND_SEND_FRAGMENT ||
-              totalLength != incomingCommand -> packet -> dataLength ||
-              fragmentCount != incomingCommand -> fragmentCount)
+          if ((existingCommand -> command.header.command & ENET_PROTOCOL_COMMAND_MASK) != ENET_PROTOCOL_COMMAND_SEND_FRAGMENT ||
+              totalLength != existingCommand -> packet -> dataLength ||
+              fragmentCount != existingCommand -> fragmentCount)
             return -1;
 
-          startCommand = incomingCommand;
-          break;
+          startCommand = existingCommand;
        }
     }
 
@@ -722,39 +709,18 @@ enet_protocol_handle_send_unreliable_fragment (ENetHost * host, ENetPeer * peer,
         fragmentLength > totalLength - fragmentOffset)
       return -1;
 
-    for (currentCommand = enet_list_previous (enet_list_end (& channel -> incomingUnreliableCommands));
-         currentCommand != enet_list_end (& channel -> incomingUnreliableCommands);
-         currentCommand = enet_list_previous (currentCommand))
     {
-       ENetIncomingCommand * incomingCommand = (ENetIncomingCommand *) currentCommand;
-
-       if (reliableSequenceNumber >= channel -> incomingReliableSequenceNumber)
+       ENetIncomingCommand * existingCommand = NULL;
+       enet_uint32 key = ENET_INCOMING_UNRELIABLE_COMMAND_KEY (reliableSequenceNumber, startSequenceNumber);
+       HASH_FIND (incomingCommandHash, channel -> incomingUnreliableCommandsHashTable, & key, sizeof (enet_uint32), existingCommand);
+       if (existingCommand != NULL)
        {
-          if (incomingCommand -> reliableSequenceNumber < channel -> incomingReliableSequenceNumber)
-            continue;
-       }
-       else
-       if (incomingCommand -> reliableSequenceNumber >= channel -> incomingReliableSequenceNumber)
-         break;
-
-       if (incomingCommand -> reliableSequenceNumber < reliableSequenceNumber)
-         break;
-
-       if (incomingCommand -> reliableSequenceNumber > reliableSequenceNumber)
-         continue;
-
-       if (incomingCommand -> unreliableSequenceNumber <= startSequenceNumber)
-       {
-          if (incomingCommand -> unreliableSequenceNumber < startSequenceNumber)
-            break;
-
-          if ((incomingCommand -> command.header.command & ENET_PROTOCOL_COMMAND_MASK) != ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT ||
-              totalLength != incomingCommand -> packet -> dataLength ||
-              fragmentCount != incomingCommand -> fragmentCount)
+          if ((existingCommand -> command.header.command & ENET_PROTOCOL_COMMAND_MASK) != ENET_PROTOCOL_COMMAND_SEND_UNRELIABLE_FRAGMENT ||
+              totalLength != existingCommand -> packet -> dataLength ||
+              fragmentCount != existingCommand -> fragmentCount)
             return -1;
 
-          startCommand = incomingCommand;
-          break;
+          startCommand = existingCommand;
        }
     }
 
