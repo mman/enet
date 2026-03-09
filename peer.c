@@ -299,7 +299,8 @@ enet_peer_remove_incoming_commands (ENetPeer * peer, ENetList * queue, ENetListI
 
        enet_list_remove (& incomingCommand -> incomingCommandList);
 
-       if (hashTable != NULL)
+       if (hashTable != NULL &&
+           (incomingCommand -> command.header.command & ENET_PROTOCOL_COMMAND_MASK) != ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED)
          HASH_DELETE (incomingCommandHash, * hashTable, incomingCommand);
 
        if (incomingCommand -> packet != NULL)
@@ -755,9 +756,19 @@ static void
 enet_peer_remove_incoming_commands_from_hash (ENetIncomingCommand ** hashTable, ENetListIterator startCommand, ENetListIterator endCommand)
 {
     ENetListIterator currentCommand;
+
+    if (* hashTable == NULL)
+      return;
+
     for (currentCommand = startCommand; currentCommand != enet_list_next (endCommand); currentCommand = enet_list_next (currentCommand))
     {
-       HASH_DELETE (incomingCommandHash, * hashTable, (ENetIncomingCommand *) currentCommand);
+       ENetIncomingCommand * incomingCommand = (ENetIncomingCommand *) currentCommand;
+
+       /* Unsequenced commands are never added to the hash table, so skip them */
+       if ((incomingCommand -> command.header.command & ENET_PROTOCOL_COMMAND_MASK) == ENET_PROTOCOL_COMMAND_SEND_UNSEQUENCED)
+         continue;
+
+       HASH_DELETE (incomingCommandHash, * hashTable, incomingCommand);
     }
 }
 
