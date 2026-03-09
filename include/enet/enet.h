@@ -13,10 +13,14 @@
 #include "enet/unix.h"
 #endif
 
+#include <stddef.h>
 #include "enet/types.h"
 #include "enet/protocol.h"
 #include "enet/list.h"
 #include "enet/callbacks.h"
+
+#define enet_active_peer_from_iterator(iterator) \
+    ((ENetPeer *) ((char *) (iterator) - offsetof (struct _ENetPeer, activePeerList)))
 
 #define ENET_VERSION_MAJOR 1
 #define ENET_VERSION_MINOR 3
@@ -271,6 +275,7 @@ typedef enum _ENetPeerFlag
 typedef struct _ENetPeer
 { 
    ENetListNode  dispatchList;
+   ENetListNode  activePeerList;
    struct _ENetHost * host;
    enet_uint16   outgoingPeerID;
    enet_uint16   incomingPeerID;
@@ -406,6 +411,7 @@ typedef struct _ENetHost
    size_t               channelLimit;                /**< maximum number of channels allowed for connected peers */
    enet_uint32          serviceTime;
    ENetList             dispatchQueue;
+   ENetList             activePeers;
    enet_uint32          totalQueued;
    size_t               packetSize;
    enet_uint16          headerFlags;

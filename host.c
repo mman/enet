@@ -137,6 +137,7 @@ enet_host_create (const ENetAddress * address, size_t peerCount, size_t channelL
     host -> intercept = NULL;
 
     enet_list_clear (& host -> dispatchQueue);
+    enet_list_clear (& host -> activePeers);
 
     for (currentPeer = host -> peers;
          currentPeer < & host -> peers [host -> peerCount];
@@ -235,6 +236,7 @@ enet_host_connect (ENetHost * host, const ENetAddress * address, size_t channelC
       return NULL;
     currentPeer -> channelCount = channelCount;
     currentPeer -> state = ENET_PEER_STATE_CONNECTING;
+    enet_list_insert (enet_list_end (& host -> activePeers), & currentPeer -> activePeerList);
     currentPeer -> peerAddress = * address;
     currentPeer -> connectID = enet_host_random (host);
     currentPeer -> mtu = host -> mtu;
@@ -307,12 +309,14 @@ enet_host_connect (ENetHost * host, const ENetAddress * address, size_t channelC
 void
 enet_host_broadcast (ENetHost * host, enet_uint8 channelID, ENetPacket * packet)
 {
-    ENetPeer * currentPeer;
+    ENetListIterator activePeerIter;
 
-    for (currentPeer = host -> peers;
-         currentPeer < & host -> peers [host -> peerCount];
-         ++ currentPeer)
+    for (activePeerIter = enet_list_begin (& host -> activePeers);
+         activePeerIter != enet_list_end (& host -> activePeers);
+         activePeerIter = enet_list_next (activePeerIter))
     {
+       ENetPeer * currentPeer = enet_active_peer_from_iterator (activePeerIter);
+
        if (currentPeer -> state != ENET_PEER_STATE_CONNECTED)
          continue;
 
@@ -383,6 +387,7 @@ enet_host_bandwidth_throttle (ENetHost * host)
            bandwidthLimit = 0;
     int needsAdjustment = host -> bandwidthLimitedPeers > 0 ? 1 : 0;
     ENetPeer * peer;
+    ENetListIterator activePeerIter;
     ENetProtocol command;
 
     if (elapsedTime < ENET_HOST_BANDWIDTH_THROTTLE_INTERVAL)
@@ -398,10 +403,12 @@ enet_host_bandwidth_throttle (ENetHost * host)
         dataTotal = 0;
         bandwidth = (host -> outgoingBandwidth * elapsedTime) / 1000;
 
-        for (peer = host -> peers;
-             peer < & host -> peers [host -> peerCount];
-            ++ peer)
+        for (activePeerIter = enet_list_begin (& host -> activePeers);
+             activePeerIter != enet_list_end (& host -> activePeers);
+             activePeerIter = enet_list_next (activePeerIter))
         {
+            peer = enet_active_peer_from_iterator (activePeerIter);
+
             if (peer -> state != ENET_PEER_STATE_CONNECTED && peer -> state != ENET_PEER_STATE_DISCONNECT_LATER)
               continue;
 
@@ -418,11 +425,13 @@ enet_host_bandwidth_throttle (ENetHost * host)
         else
           throttle = (bandwidth * ENET_PEER_PACKET_THROTTLE_SCALE) / dataTotal;
 
-        for (peer = host -> peers;
-             peer < & host -> peers [host -> peerCount];
-             ++ peer)
+        for (activePeerIter = enet_list_begin (& host -> activePeers);
+             activePeerIter != enet_list_end (& host -> activePeers);
+             activePeerIter = enet_list_next (activePeerIter))
         {
             enet_uint32 peerBandwidth;
+
+            peer = enet_active_peer_from_iterator (activePeerIter);
             
             if ((peer -> state != ENET_PEER_STATE_CONNECTED && peer -> state != ENET_PEER_STATE_DISCONNECT_LATER) ||
                 peer -> incomingBandwidth == 0 ||
@@ -461,10 +470,12 @@ enet_host_bandwidth_throttle (ENetHost * host)
         else
           throttle = (bandwidth * ENET_PEER_PACKET_THROTTLE_SCALE) / dataTotal;
 
-        for (peer = host -> peers;
-             peer < & host -> peers [host -> peerCount];
-             ++ peer)
+        for (activePeerIter = enet_list_begin (& host -> activePeers);
+             activePeerIter != enet_list_end (& host -> activePeers);
+             activePeerIter = enet_list_next (activePeerIter))
         {
+            peer = enet_active_peer_from_iterator (activePeerIter);
+
             if ((peer -> state != ENET_PEER_STATE_CONNECTED && peer -> state != ENET_PEER_STATE_DISCONNECT_LATER) ||
                 peer -> outgoingBandwidthThrottleEpoch == timeCurrent)
               continue;
@@ -495,10 +506,12 @@ enet_host_bandwidth_throttle (ENetHost * host)
            needsAdjustment = 0;
            bandwidthLimit = bandwidth / peersRemaining;
 
-           for (peer = host -> peers;
-                peer < & host -> peers [host -> peerCount];
-                ++ peer)
+           for (activePeerIter = enet_list_begin (& host -> activePeers);
+                activePeerIter != enet_list_end (& host -> activePeers);
+                activePeerIter = enet_list_next (activePeerIter))
            {
+               peer = enet_active_peer_from_iterator (activePeerIter);
+
                if ((peer -> state != ENET_PEER_STATE_CONNECTED && peer -> state != ENET_PEER_STATE_DISCONNECT_LATER) ||
                    peer -> incomingBandwidthThrottleEpoch == timeCurrent)
                  continue;
@@ -515,10 +528,12 @@ enet_host_bandwidth_throttle (ENetHost * host)
            }
        }
 
-       for (peer = host -> peers;
-            peer < & host -> peers [host -> peerCount];
-            ++ peer)
+       for (activePeerIter = enet_list_begin (& host -> activePeers);
+            activePeerIter != enet_list_end (& host -> activePeers);
+            activePeerIter = enet_list_next (activePeerIter))
        {
+           peer = enet_active_peer_from_iterator (activePeerIter);
+
            if (peer -> state != ENET_PEER_STATE_CONNECTED && peer -> state != ENET_PEER_STATE_DISCONNECT_LATER)
              continue;
 

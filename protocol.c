@@ -328,15 +328,25 @@ enet_protocol_handle_connect (ENetHost * host, ENetProtocolHeader * header, ENet
             if (peer == NULL)
               peer = currentPeer;
         }
-        else
-        if (currentPeer -> state != ENET_PEER_STATE_CONNECTING &&
-            in6_equal(currentPeer -> peerAddress.host , host -> peerAddress.host))
-        {
-            if (currentPeer -> peerAddress.port == host -> peerAddress.port &&
-                currentPeer -> connectID == command -> connect.connectID)
-              return NULL;
+    }
 
-            ++ duplicatePeers;
+    {
+        ENetListIterator activePeerIter;
+        for (activePeerIter = enet_list_begin (& host -> activePeers);
+             activePeerIter != enet_list_end (& host -> activePeers);
+             activePeerIter = enet_list_next (activePeerIter))
+        {
+            currentPeer = enet_active_peer_from_iterator (activePeerIter);
+
+            if (currentPeer -> state != ENET_PEER_STATE_CONNECTING &&
+                in6_equal(currentPeer -> peerAddress.host , host -> peerAddress.host))
+            {
+                if (currentPeer -> peerAddress.port == host -> peerAddress.port &&
+                    currentPeer -> connectID == command -> connect.connectID)
+                  return NULL;
+
+                ++ duplicatePeers;
+            }
         }
     }
 
@@ -350,6 +360,7 @@ enet_protocol_handle_connect (ENetHost * host, ENetProtocolHeader * header, ENet
       return NULL;
     peer -> channelCount = channelCount;
     peer -> state = ENET_PEER_STATE_ACKNOWLEDGING_CONNECT;
+    enet_list_insert (enet_list_end (& host -> activePeers), & peer -> activePeerList);
     peer -> connectID = command -> connect.connectID;
     peer -> peerAddress = host -> peerAddress;
     peer -> localAddress = host -> localAddress;
@@ -1650,12 +1661,16 @@ enet_protocol_send_outgoing_commands (ENetHost * host, ENetEvent * event, int ch
     enet_list_clear (& sentUnreliableCommands);
 
     for (int sendPass = 0, continueSending = 0; sendPass <= continueSending; ++ sendPass)
-    for (ENetPeer * currentPeer = host -> peers;
-         currentPeer < & host -> peers [host -> peerCount];
-         ++ currentPeer)
     {
-        if (currentPeer -> state == ENET_PEER_STATE_DISCONNECTED ||
-            currentPeer -> state == ENET_PEER_STATE_ZOMBIE ||
+    ENetListIterator activePeerIter, activePeerNext;
+    for (activePeerIter = enet_list_begin (& host -> activePeers);
+         activePeerIter != enet_list_end (& host -> activePeers);
+         activePeerIter = activePeerNext)
+    {
+        activePeerNext = enet_list_next (activePeerIter);
+        ENetPeer * currentPeer = enet_active_peer_from_iterator (activePeerIter);
+
+        if (currentPeer -> state == ENET_PEER_STATE_ZOMBIE ||
             (sendPass > 0 && ! (currentPeer -> flags & ENET_PEER_FLAG_CONTINUE_SENDING)))
           continue;
 
@@ -1803,6 +1818,7 @@ enet_protocol_send_outgoing_commands (ENetHost * host, ENetEvent * event, int ch
     nextPeer:
         if (currentPeer -> flags & ENET_PEER_FLAG_CONTINUE_SENDING)
           continueSending = sendPass + 1;
+    }
     }
 
     return 0;
