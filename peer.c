@@ -337,6 +337,7 @@ enet_peer_reset_queues (ENetPeer * peer)
     while (! enet_list_empty (& peer -> acknowledgements))
       enet_free (enet_list_remove (enet_list_begin (& peer -> acknowledgements)));
 
+    HASH_CLEAR (sentReliableCommandHash, peer -> sentReliableCommandsHashTable);
     enet_peer_reset_outgoing_commands (peer, & peer -> sentReliableCommands);
     enet_peer_reset_outgoing_commands (peer, & peer -> outgoingCommands);
     enet_peer_reset_outgoing_commands (peer, & peer -> outgoingSendReliableCommands);

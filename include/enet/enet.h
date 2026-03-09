@@ -18,9 +18,13 @@
 #include "enet/protocol.h"
 #include "enet/list.h"
 #include "enet/callbacks.h"
+#include "enet/uthash.h"
 
 #define enet_active_peer_from_iterator(iterator) \
     ((ENetPeer *) ((char *) (iterator) - offsetof (struct _ENetPeer, activePeerList)))
+
+#define ENET_SENT_RELIABLE_COMMAND_KEY(channelID, reliableSequenceNumber) \
+    (((enet_uint32)(channelID) << 16) | (enet_uint32)(reliableSequenceNumber))
 
 #define ENET_VERSION_MAJOR 1
 #define ENET_VERSION_MINOR 3
@@ -186,6 +190,8 @@ typedef struct _ENetOutgoingCommand
    enet_uint16  sendAttempts;
    ENetProtocol command;
    ENetPacket * packet;
+   enet_uint32  sentReliableCommandKey;  /**< packed (channelID << 16 | reliableSequenceNumber) for hash lookup */
+   UT_hash_handle sentReliableCommandHash; /**< uthash handle for sentReliableCommands hash table */
 } ENetOutgoingCommand;
 
 typedef struct _ENetIncomingCommand
@@ -328,6 +334,7 @@ typedef struct _ENetPeer
    enet_uint16   outgoingReliableSequenceNumber;
    ENetList      acknowledgements;
    ENetList      sentReliableCommands;
+   struct _ENetOutgoingCommand * sentReliableCommandsHashTable; /**< uthash index for O(1) lookup by (channelID, reliableSequenceNumber) */
    ENetList      outgoingSendReliableCommands;
    ENetList      outgoingCommands;
    ENetList      dispatchedCommands;

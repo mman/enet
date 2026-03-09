@@ -228,22 +228,15 @@ static ENetProtocolCommand
 enet_protocol_remove_sent_reliable_command (ENetPeer * peer, enet_uint16 reliableSequenceNumber, enet_uint8 channelID)
 {
     ENetOutgoingCommand * outgoingCommand = NULL;
-    ENetListIterator currentCommand;
     ENetProtocolCommand commandNumber;
     int wasSent = 1;
 
-    for (currentCommand = enet_list_begin (& peer -> sentReliableCommands);
-         currentCommand != enet_list_end (& peer -> sentReliableCommands);
-         currentCommand = enet_list_next (currentCommand))
     {
-       outgoingCommand = (ENetOutgoingCommand *) currentCommand;
-
-       if (outgoingCommand -> reliableSequenceNumber == reliableSequenceNumber &&
-           outgoingCommand -> command.header.channelID == channelID)
-         break;
+       enet_uint32 key = ENET_SENT_RELIABLE_COMMAND_KEY (channelID, reliableSequenceNumber);
+       HASH_FIND (sentReliableCommandHash, peer -> sentReliableCommandsHashTable, & key, sizeof (enet_uint32), outgoingCommand);
     }
 
-    if (currentCommand == enet_list_end (& peer -> sentReliableCommands))
+    if (outgoingCommand == NULL)
     {
        outgoingCommand = enet_protocol_find_sent_reliable_command (& peer -> outgoingCommands, reliableSequenceNumber, channelID);
        if (outgoingCommand == NULL)
@@ -268,6 +261,9 @@ enet_protocol_remove_sent_reliable_command (ENetPeer * peer, enet_uint16 reliabl
     }
 
     commandNumber = (ENetProtocolCommand) (outgoingCommand -> command.header.command & ENET_PROTOCOL_COMMAND_MASK);
+
+    if (wasSent)
+      HASH_DELETE (sentReliableCommandHash, peer -> sentReliableCommandsHashTable, outgoingCommand);
 
     enet_list_remove (& outgoingCommand -> outgoingCommandList);
 
@@ -1424,6 +1420,8 @@ enet_protocol_check_timeouts (ENetHost * host, ENetPeer * peer, ENetEvent * even
 
        outgoingCommand -> roundTripTimeout *= 2;
 
+       HASH_DELETE (sentReliableCommandHash, peer -> sentReliableCommandsHashTable, outgoingCommand);
+
        if (outgoingCommand -> packet != NULL)
        {
          peer -> reliableDataInQueue += outgoingCommand -> fragmentLength;
@@ -1557,6 +1555,11 @@ enet_protocol_check_outgoing_commands (ENetHost * host, ENetPeer * peer, ENetLis
 
           enet_list_insert (enet_list_end (& peer -> sentReliableCommands),
                             enet_list_remove (& outgoingCommand -> outgoingCommandList));
+
+          outgoingCommand -> sentReliableCommandKey = ENET_SENT_RELIABLE_COMMAND_KEY (
+              outgoingCommand -> command.header.channelID,
+              outgoingCommand -> reliableSequenceNumber);
+          HASH_ADD (sentReliableCommandHash, peer -> sentReliableCommandsHashTable, sentReliableCommandKey, sizeof (enet_uint32), outgoingCommand);
 
           outgoingCommand -> sentTime = host -> serviceTime;
 

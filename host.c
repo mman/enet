@@ -150,6 +150,7 @@ enet_host_create (const ENetAddress * address, size_t peerCount, size_t channelL
 
        enet_list_clear (& currentPeer -> acknowledgements);
        enet_list_clear (& currentPeer -> sentReliableCommands);
+       currentPeer -> sentReliableCommandsHashTable = NULL;
        enet_list_clear (& currentPeer -> outgoingCommands);
        enet_list_clear (& currentPeer -> outgoingSendReliableCommands);
        enet_list_clear (& currentPeer -> dispatchedCommands);
