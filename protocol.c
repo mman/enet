@@ -1037,6 +1037,9 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
          return 0;
     }
 
+    if (host -> receivedDataLength < headerSize)
+      return 0;
+
     if (flags & ENET_PROTOCOL_HEADER_FLAG_COMPRESSED)
     {
         size_t originalSize;
