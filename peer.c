@@ -1022,6 +1022,9 @@ enet_peer_queue_incoming_command (ENetPeer * peer, const ENetProtocol * command,
     if (packet == NULL)
       goto notifyError;
 
+    if (data == NULL && dataLength > 0 && packet -> data != NULL)
+      memset (packet -> data, 0, dataLength);
+
     incomingCommand = (ENetIncomingCommand *) enet_malloc (sizeof (ENetIncomingCommand));
     if (incomingCommand == NULL)
       goto notifyError;
