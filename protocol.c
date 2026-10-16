@@ -299,6 +299,17 @@ enet_protocol_remove_sent_reliable_command (ENetPeer * peer, enet_uint16 reliabl
     return commandNumber;
 }
 
+static void
+enet_protocol_clamp_throttle (ENetPeer * peer)
+{
+    if (peer -> packetThrottleInterval > 60000)
+      peer -> packetThrottleInterval = 60000;
+    if (peer -> packetThrottleAcceleration > ENET_PEER_PACKET_THROTTLE_SCALE)
+      peer -> packetThrottleAcceleration = ENET_PEER_PACKET_THROTTLE_SCALE;
+    if (peer -> packetThrottleDeceleration > ENET_PEER_PACKET_THROTTLE_SCALE)
+      peer -> packetThrottleDeceleration = ENET_PEER_PACKET_THROTTLE_SCALE;
+}
+
 static ENetPeer *
 enet_protocol_handle_connect (ENetHost * host, ENetProtocolHeader * header, ENetProtocol * command)
 {
@@ -368,6 +379,7 @@ enet_protocol_handle_connect (ENetHost * host, ENetProtocolHeader * header, ENet
     peer -> packetThrottleInterval = ENET_NET_TO_HOST_32 (command -> connect.packetThrottleInterval);
     peer -> packetThrottleAcceleration = ENET_NET_TO_HOST_32 (command -> connect.packetThrottleAcceleration);
     peer -> packetThrottleDeceleration = ENET_NET_TO_HOST_32 (command -> connect.packetThrottleDeceleration);
+    enet_protocol_clamp_throttle (peer);
     peer -> eventData = ENET_NET_TO_HOST_32 (command -> connect.data);
 
     incomingSessionID = command -> connect.incomingSessionID == 0xFF ? peer -> outgoingSessionID : command -> connect.incomingSessionID;
@@ -803,6 +815,7 @@ enet_protocol_handle_throttle_configure (ENetHost * host, ENetPeer * peer, const
     peer -> packetThrottleInterval = ENET_NET_TO_HOST_32 (command -> throttleConfigure.packetThrottleInterval);
     peer -> packetThrottleAcceleration = ENET_NET_TO_HOST_32 (command -> throttleConfigure.packetThrottleAcceleration);
     peer -> packetThrottleDeceleration = ENET_NET_TO_HOST_32 (command -> throttleConfigure.packetThrottleDeceleration);
+    enet_protocol_clamp_throttle (peer);
 
     return 0;
 }
