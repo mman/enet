@@ -1388,10 +1388,13 @@ enet_protocol_check_timeouts (ENetHost * host, ENetPeer * peer, ENetEvent * even
            ENET_TIME_LESS (outgoingCommand -> sentTime, peer -> earliestTimeout))
          peer -> earliestTimeout = outgoingCommand -> sentTime;
 
-       if (peer -> earliestTimeout != 0 &&
+       if ((peer -> state == ENET_PEER_STATE_ACKNOWLEDGING_CONNECT &&
+             outgoingCommand -> sendAttempts >= ENET_HANDSHAKE_ATTEMPTS) ||
+           (peer -> earliestTimeout != 0 &&
              (ENET_TIME_DIFFERENCE (host -> serviceTime, peer -> earliestTimeout) >= peer -> timeoutMaximum ||
-               ((1u << (outgoingCommand -> sendAttempts - 1)) >= peer -> timeoutLimit &&
-                 ENET_TIME_DIFFERENCE (host -> serviceTime, peer -> earliestTimeout) >= peer -> timeoutMinimum)))
+               ((outgoingCommand -> sendAttempts > 32 ||
+                 (1u << (outgoingCommand -> sendAttempts > 0 ? outgoingCommand -> sendAttempts - 1 : 0)) >= peer -> timeoutLimit) &&
+                 ENET_TIME_DIFFERENCE (host -> serviceTime, peer -> earliestTimeout) >= peer -> timeoutMinimum))))
        {
           enet_protocol_notify_disconnect (host, peer, event);
 

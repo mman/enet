@@ -43,6 +43,10 @@
 
 typedef enet_uint32 ENetVersion;
 
+#ifndef ENET_HANDSHAKE_ATTEMPTS
+#define ENET_HANDSHAKE_ATTEMPTS 2
+#endif
+
 struct _ENetHost;
 struct _ENetEvent;
 struct _ENetPacket;
